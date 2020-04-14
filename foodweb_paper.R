@@ -13,8 +13,12 @@ library(skimr)
 library(magrittr)
 library(corrgram)
 library(readxl)
+library(sjPlot)
+library(sjlabelled)
+library(sjmisc)
 
-source('~/Google Drive/Recherche/PhD/R/functions/utils.R')
+devtools::source_url('https://raw.githubusercontent.com/VFugere/Rfuncs/master/vif.R')
+devtools::source_url('https://raw.githubusercontent.com/VFugere/Rfuncs/master/utils.R')
 
 #### basic data
 
@@ -28,23 +32,14 @@ pulse.dates <- as.Date(c('22/08/2016','19/09/2016','30/09/2016'), format = '%d/%
 pulse.dates <- format(pulse.dates, '%j')
 pulse.dates <- as.numeric(pulse.dates) - 229
 
-treat <- read.csv('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/LEAP2016treatments.csv', stringsAsFactors = F)
-treat <- select(treat, pond, nut.f, gly.lvl, imi.lvl) %>%
-  rename('site' = pond,'nut' = nut.f, 'gly' = gly.lvl, 'imi' = imi.lvl)
-
-# gly.cols <- c('#ABABAB','#EBD109')
-# colfunc <- colorRampPalette(gly.cols)
-# gly.cols <- colfunc(8)
-# imi.cols <- c('#ABABAB','#0713B5')
-# colfunc <- colorRampPalette(imi.cols)
-# imi.cols <- colfunc(8)
-# both.cols <- c('#ABABAB','#077516')
-# colfunc <- colorRampPalette(both.cols)
-# both.cols <- colfunc(8)
+treat <- read.csv('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/LEAP2016treatments.csv', stringsAsFactors = F) %>%
+  rename('site' = pond,'nut' = nut.f, 'gly' = gly.lvl, 'imi' = imi.lvl, 'gly.target.ppb' = gly.conc, 'imi.target.ppb' = imi.conc) %>%
+  select(-nut.ug.P,-nut.rel,-array,-nb)
 
 gly.cols <- brewer.pal(8, 'Reds')
 imi.cols <- brewer.pal(8, 'Blues')
 both.cols <- brewer.pal(8, 'Greens')
+pchs <- c(1,0)
 
 #### nutrient and pesticide data ####
 
@@ -52,8 +47,13 @@ nut <- read_xlsx('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/2016nutrie
   group_by(site,time.point,var) %>% summarize(day = mean(day), conc = mean(conc.ug.per.L, na.rm=T)) %>%
   ungroup %>% filter(var != 'SRP', time.point != 4) %>% select(-time.point) %>% spread(var,conc) %>% rename(date = day)
 
-gly <- read_xlsx('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/Contaminants/gly_clean.xlsx')
-imi <- read_xlsx('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/Contaminants/imi_clean.xlsx')
+gly <- read_xlsx('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/Contaminants/gly_clean.xlsx') %>% select(-time.point, -gly.expected.ppb, -gly.max.ppb)
+gly$date <- gly$date %>% as.Date(format = '%d.%m.%Y') %>% format('%j') %>% as.numeric
+gly$date <- gly$date - 229
+
+imi <- read_xlsx('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/Contaminants/imi_clean.xlsx') %>% select(-time.point, -notes)
+imi$date <- imi$date %>% as.Date(format = '%d.%m.%Y') %>% format('%j') %>% as.numeric
+imi$date <- imi$date - 229
 
 #### YSI & metab data ####
 
@@ -71,12 +71,12 @@ YSI <- YSI[YSI$date < 45,]
 YSI$period <- as.factor(YSI$period)
 YSI$TP <- as.factor(YSI$date)
 YSI <- YSI %>% group_by(TP, site) %>%
-  mutate(NEP = DO.mg.L[2] - DO.mg.L[1], pH.diff = pH[2] - pH[1], pH.mean = mean(pH[1],pH[2]), temp.mean = mean(temp.C[1],temp.C[2])) %>%
+  mutate(NEP = DO.mg.L[2] - DO.mg.L[1], pH.diff = pH[2] - pH[1], pH.mean = mean(pH[1],pH[2]), temp.mean = mean(temp.C[1],temp.C[2]), DO.mean = mean(DO.mg.L[1],DO.mg.L[2]), SPC.mean = mean(SPC.uS.cm[1],SPC.uS.cm[2])) %>%
   ungroup
 YSI <- YSI[YSI$period != 'dusk',]
 #correcting for offset in 5th time point due to calibration problems.
 YSI$NEP[YSI$date == 35] <- YSI$NEP[YSI$date == 35] - 1
-YSI <- YSI %>% select(date,site,NEP:temp.mean)
+YSI <- YSI %>% select(date,site,NEP:SPC.mean)
 
 #### fluoroprobe data ####
 
@@ -117,11 +117,25 @@ data <- inner_join(FP,YSI, by = c('date','site')) %>%
   inner_join(FC, by = c('date','site')) %>%
   inner_join(EP, by = c('date','site')) %>%
   left_join(treat, by = c('site')) %>% 
-  select(date, site, nut:imi, everything())
+  select(date, site, nut, gly:imi.target.ppb, everything()) %>%
+  select(-gly.target.ppb,-imi.target.ppb,-water) %>%
+  mutate(nut = as.numeric(factor(nut, levels=c('low','high'))))
 
-corrgram(data[,c(1,6:52)], order=TRUE, lower.panel=panel.shade,
+corrgram(data, order=F, lower.panel=panel.shade,
          upper.panel=panel.pie, text.panel=panel.txt,
          main=NULL)
+
+#hard to see because of non-linear effects. Splitting by sampling date
+pdf('~/Desktop/corrgrams.pdf',height = 12,width = 12,onefile = T,pointsize = 8)
+for(d in Sampling.dates){
+  data.sub <- filter(data, date == d) %>% select(-date,-site)
+  data.sub <- data.sub[,apply(data.sub, 2, sd) != 0]
+  corrgram(data.sub, order=F, lower.panel=panel.shade,
+           upper.panel=panel.pie, text.panel=panel.txt,
+           main=paste0('Day ',d))
+}
+dev.off()
+
 
 #for talk
 vars <- c('total','BA','NEP','use','Glycogen')
