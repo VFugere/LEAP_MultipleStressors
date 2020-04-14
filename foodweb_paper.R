@@ -117,9 +117,9 @@ data <- inner_join(FP,YSI, by = c('date','site')) %>%
   inner_join(FC, by = c('date','site')) %>%
   inner_join(EP, by = c('date','site')) %>%
   left_join(treat, by = c('site')) %>% 
-  select(date, site, nut, gly:imi.target.ppb, everything()) %>%
   select(-gly.target.ppb,-imi.target.ppb,-water) %>%
-  mutate(nut = as.numeric(factor(nut, levels=c('low','high'))))
+  mutate(nut = as.numeric(factor(nut, levels=c('low','high')))) %>%
+  select(date, site, nut, gly, imi, NEP:SPC.mean, greens:total, BA, AWCD:Amines_amides, everything())
 
 corrgram(data, order=F, lower.panel=panel.shade,
          upper.panel=panel.pie, text.panel=panel.txt,
