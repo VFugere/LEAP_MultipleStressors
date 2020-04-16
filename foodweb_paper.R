@@ -35,11 +35,17 @@ pulse.dates <- as.numeric(pulse.dates) - 229
 treat <- read.csv('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/LEAP2016treatments.csv', stringsAsFactors = F) %>%
   rename('site' = pond,'nut' = nut.f, 'gly' = gly.lvl, 'imi' = imi.lvl, 'gly.target.ppb' = gly.conc, 'imi.target.ppb' = imi.conc) %>%
   select(-nut.ug.P,-nut.rel,-array,-nb)
+treat$nut.fac <- factor(treat$nut, levels = c('low','high'))
+treat$nut.num <- as.numeric(treat$nut.fac)
 
-gly.cols <- brewer.pal(8, 'Reds')
-imi.cols <- brewer.pal(8, 'Blues')
-both.cols <- brewer.pal(8, 'Greens')
+colfunc <- colorRampPalette(c("gray80", "#99000D"))
+gly.cols <- colfunc(8)
+colfunc <- colorRampPalette(c("gray80", "#084594"))
+imi.cols <- colfunc(8)
+colfunc <- colorRampPalette(c("gray80", "#005A32"))
+both.cols <- colfunc(8)
 pchs <- c(1,0)
+rm(colfunc)
 
 #### nutrient and pesticide data ####
 
@@ -120,6 +126,71 @@ data <- inner_join(FP,YSI, by = c('date','site')) %>%
   select(-gly.target.ppb,-imi.target.ppb,-water) %>%
   mutate(nut = as.numeric(factor(nut, levels=c('low','high')))) %>%
   select(date, site, nut, gly, imi, NEP:SPC.mean, greens:total, BA, AWCD:Amines_amides, everything())
+
+#### Figure: did treatments work? ####
+
+## nutrients
+
+pdf('~/Desktop/nut.pdf',width=7,height = 10,pointsize = 12)
+par(mfrow=c(3,1),cex=1,mar=c(4,4,1,1))
+
+nut <- left_join(nut, treat)
+tmp <- filter(nut, gly == 1, imi == 1, site != 'LAKE')
+lake <- filter(nut, site == 'LAKE')
+
+#TN
+plotfunctions::emptyPlot(xlim=c(1,43),ylim=range(tmp$TN),yaxt='n',xaxt='n',ann=F, bty='l', log = 'y')
+axis(2,cex.axis=1,lwd=0,lwd.ticks=1)
+axis(1,cex.axis=1,lwd=0,lwd.ticks=1)
+title(ylab=expression(paste('TN (',mu,g~L^-1,')')),line=2.8)
+title(xlab="day", cex.lab=1,line=2.8)
+abline(v=pulse.dates[1:2],lty=3)
+for(i in 1:6){
+  pond <- unique(tmp$site)[i]
+  sub.sub <- filter(tmp, site == pond)
+  points(x=sub.sub$date,y=sub.sub$TN,type='o',lwd=1,pch=pchs[sub.sub$nut.num[1]],col=gly.cols[1])
+}
+points(x=lake$date,y=lake$TN,type='o',lwd=1,pch=16,col=1)
+legend(x=8,y=max(tmp$TN),bty='n',legend=c('low nutrient','high nutrient','source lake'),pch=c(1,0,16),lty=1,col=c('gray80','gray80','black'))
+
+#TP
+plotfunctions::emptyPlot(xlim=c(1,43),ylim=range(tmp$TP),yaxt='n',xaxt='n',ann=F, bty='l', log = 'y')
+axis(2,cex.axis=1,lwd=0,lwd.ticks=1)
+axis(1,cex.axis=1,lwd=0,lwd.ticks=1)
+title(ylab=expression(paste('TP (',mu,g~L^-1,')')),line=2.8)
+title(xlab="day", cex.lab=1,line=2.8)
+abline(v=pulse.dates[1:2],lty=3)
+for(i in 1:6){
+  pond <- unique(tmp$site)[i]
+  sub.sub <- filter(tmp, site == pond)
+  points(x=sub.sub$date,y=sub.sub$TP,type='o',lwd=1,pch=pchs[sub.sub$nut.num[1]],col=gly.cols[1])
+}
+points(x=lake$date,y=lake$TP,type='o',lwd=1,pch=16,col=1)
+legend(x=8,y=max(tmp$TP),bty='n',legend=c('low nutrient','high nutrient','source lake'),pch=c(1,0,16),lty=1,col=c('gray80','gray80','black'))
+
+#molar ratio
+# N 14.0067 g/moles
+# P 30.97376 g/moles
+nut$NP <- (nut$TN/14.0067)/(nut$TP/30.97376)
+tmp <- filter(nut, gly == 1, imi == 1, site != 'LAKE')
+lake <- filter(nut, site == 'LAKE')
+plotfunctions::emptyPlot(xlim=c(1,43),ylim=range(tmp$NP),yaxt='n',xaxt='n',ann=F, bty='l')
+axis(2,cex.axis=1,lwd=0,lwd.ticks=1)
+axis(1,cex.axis=1,lwd=0,lwd.ticks=1)
+title(ylab='N:P molar ratio',line=2.8)
+title(xlab="day", cex.lab=1,line=2.8)
+abline(v=pulse.dates[1:2],lty=3)
+for(i in 1:6){
+  pond <- unique(tmp$site)[i]
+  sub.sub <- filter(tmp, site == pond)
+  points(x=sub.sub$date,y=sub.sub$NP,type='o',lwd=1,pch=pchs[sub.sub$nut.num[1]],col=gly.cols[1])
+}
+points(x=lake$date,y=lake$NP,type='o',lwd=1,pch=16,col=1)
+legend(x=8,y=max(tmp$NP),bty='n',legend=c('low nutrient','high nutrient','source lake'),pch=c(1,0,16),lty=1,col=c('gray80','gray80','black'))
+
+dev.off()
+
+#### data exploration: correlations in the dataset ####
 
 corrgram(data, order=F, lower.panel=panel.shade,
          upper.panel=panel.pie, text.panel=panel.txt,
@@ -207,7 +278,10 @@ f1 <- update(f1, . ~ . + (1+date|site))
 # m2 <- lmer(f1, ba)
 # summary(m2)
 # plot(m2) #bad
+
 library(brms)
+
+
 
 m3 <- brm(f1, ba, family=Gamma(link='log'), cores=4, iter = 10000)
 summary(m3)
@@ -217,11 +291,12 @@ marginal_effects(m3)
 m3 -> m.fact
 
 ba <- ba %>% mutate_at(vars('gly','imi'), as.numeric)
-m3 <- brm(f1, ba, family=Gamma(link='log'), cores=4, iter = 10000)
+m3 <- brm(f1, ba, family=Gamma(link='log'), cores=8, iter = 10000)
 summary(m3)
 plot(m3)
 pp_check(m3)
 marginal_effects(m3)
+
 #### Ecoplates ordination (in progress) ####
 
 #com2 <- select(data, date:imi,Polymers:Amines_amides)
