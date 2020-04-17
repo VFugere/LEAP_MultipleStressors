@@ -131,15 +131,15 @@ data <- inner_join(FP,YSI, by = c('date','site')) %>%
 
 ## nutrients
 
-#pdf('~/Desktop/nut.pdf',width=7,height = 10,pointsize = 12)
-par(mfrow=c(3,1),cex=1,mar=c(4,4,1,1))
+pdf('~/Desktop/figure2.pdf',width=10,height = 8,pointsize = 12)
+par(mfrow=c(3,2),cex=1,mar=c(4,4,1,1))
 
 nut <- left_join(nut, treat)
 tmp <- filter(nut, gly == 1, imi == 1, site != 'LAKE')
 lake <- filter(nut, site == 'LAKE')
 
 #TN
-plotfunctions::emptyPlot(xlim=c(1,43),ylim=range(tmp$TN),yaxt='n',xaxt='n',ann=F, bty='l', log = 'y')
+plotfunctions::emptyPlot(xlim=c(5,43),ylim=range(tmp$TN)*c(0.9,1.1),yaxt='n',xaxt='n',ann=F, bty='l', log = 'y')
 axis(2,cex.axis=1,lwd=0,lwd.ticks=1)
 axis(1,cex.axis=1,lwd=0,lwd.ticks=1)
 title(ylab=expression(paste('TN (',mu,g~L^-1,')')),line=2.8)
@@ -151,10 +151,13 @@ for(i in 1:6){
   points(x=sub.sub$date,y=sub.sub$TN,type='o',lwd=1,pch=pchs[sub.sub$nut.num[1]],col=gly.cols[1])
 }
 points(x=lake$date,y=lake$TN,type='o',lwd=1,pch=16,col=1)
-legend(x=8,y=max(tmp$TN),bty='n',legend=c('low nutrient','high nutrient','source lake'),pch=c(1,0,16),lty=1,col=c('gray80','gray80','black'))
+legend(x=7,y=max(tmp$TN),bty='n',legend=c('low nutrient','high nutrient','source lake'),pch=c(1,0,16),lty=1,col=c('gray80','gray80','black'))
+text(x=pulse.dates[1],y=max(tmp$TN)*1.05,label=expression(italic(dose~1)),pos=4)
+text(x=pulse.dates[2],y=max(tmp$TN)*1.05,label=expression(italic(dose~2)),pos=4)
+
 
 #TP
-plotfunctions::emptyPlot(xlim=c(1,43),ylim=range(tmp$TP),yaxt='n',xaxt='n',ann=F, bty='l', log = 'y')
+plotfunctions::emptyPlot(xlim=c(5,43),ylim=range(tmp$TP)*c(0.9,1.1),yaxt='n',xaxt='n',ann=F, bty='l', log = 'y')
 axis(2,cex.axis=1,lwd=0,lwd.ticks=1)
 axis(1,cex.axis=1,lwd=0,lwd.ticks=1)
 title(ylab=expression(paste('TP (',mu,g~L^-1,')')),line=2.8)
@@ -166,37 +169,84 @@ for(i in 1:6){
   points(x=sub.sub$date,y=sub.sub$TP,type='o',lwd=1,pch=pchs[sub.sub$nut.num[1]],col=gly.cols[1])
 }
 points(x=lake$date,y=lake$TP,type='o',lwd=1,pch=16,col=1)
-legend(x=8,y=max(tmp$TP),bty='n',legend=c('low nutrient','high nutrient','source lake'),pch=c(1,0,16),lty=1,col=c('gray80','gray80','black'))
+legend(x=7,y=max(tmp$TP),bty='n',legend=c('low nutrient','high nutrient','source lake'),pch=c(1,0,16),lty=1,col=c('gray80','gray80','black'))
+text(x=pulse.dates[1],y=max(tmp$TP)*1.05,label=expression(italic(dose~1)),pos=4)
+text(x=pulse.dates[2],y=max(tmp$TP)*1.05,label=expression(italic(dose~2)),pos=4)
 
-#molar ratio
-# N 14.0067 g/moles
-# P 30.97376 g/moles
-nut$NP <- (nut$TN/14.0067)/(nut$TP/30.97376)
-tmp <- filter(nut, gly == 1, imi == 1, site != 'LAKE')
-lake <- filter(nut, site == 'LAKE')
-plotfunctions::emptyPlot(xlim=c(1,43),ylim=range(tmp$NP),yaxt='n',xaxt='n',ann=F, bty='l')
-axis(2,cex.axis=1,lwd=0,lwd.ticks=1)
-axis(1,cex.axis=1,lwd=0,lwd.ticks=1)
-title(ylab='N:P molar ratio',line=2.8)
-title(xlab="day", cex.lab=1,line=2.8)
-abline(v=pulse.dates[1:2],lty=3)
-for(i in 1:6){
-  pond <- unique(tmp$site)[i]
-  sub.sub <- filter(tmp, site == pond)
-  points(x=sub.sub$date,y=sub.sub$NP,type='o',lwd=1,pch=pchs[sub.sub$nut.num[1]],col=gly.cols[1])
-}
-points(x=lake$date,y=lake$NP,type='o',lwd=1,pch=16,col=1)
-legend(x=8,y=max(tmp$NP),bty='n',legend=c('low nutrient','high nutrient','source lake'),pch=c(1,0,16),lty=1,col=c('gray80','gray80','black'))
-
-#dev.off()
+# #molar ratio
+# # N 14.0067 g/moles
+# # P 30.97376 g/moles
+# nut$NP <- (nut$TN/14.0067)/(nut$TP/30.97376)
+# tmp <- filter(nut, gly == 1, imi == 1, site != 'LAKE')
+# lake <- filter(nut, site == 'LAKE')
+# plotfunctions::emptyPlot(xlim=c(5,43),ylim=range(tmp$NP),yaxt='n',xaxt='n',ann=F, bty='l')
+# axis(2,cex.axis=1,lwd=0,lwd.ticks=1)
+# axis(1,cex.axis=1,lwd=0,lwd.ticks=1)
+# title(ylab='N:P molar ratio',line=2.8)
+# title(xlab="day", cex.lab=1,line=2.8)
+# abline(v=pulse.dates[1:2],lty=3)
+# for(i in 1:6){
+#   pond <- unique(tmp$site)[i]
+#   sub.sub <- filter(tmp, site == pond)
+#   points(x=sub.sub$date,y=sub.sub$NP,type='o',lwd=1,pch=pchs[sub.sub$nut.num[1]],col=gly.cols[1])
+# }
+# points(x=lake$date,y=lake$NP,type='o',lwd=1,pch=16,col=1)
+# legend(x=8,y=max(tmp$NP),bty='n',legend=c('low nutrient','high nutrient','source lake'),pch=c(1,0,16),lty=1,col=c('gray80','gray80','black'))
 
 ## pesticides
 
-gly <- gly %>% left_join(treat, by = 'site')
-imi <- imi %>% left_join(treat, by = 'site') %>% filter(site %!in% c('C5','D1',''))
-filter(imi, site == 'LAKE')
-filter(gly, site == 'LAKE')
-ts.ponds <- 
+gly <- read_xlsx('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/Contaminants/gly_clean.xlsx') %>% select(-time.point, -gly.expected.ppb, -gly.max.ppb)
+gly$date <- gly$date %>% as.Date(format = '%d.%m.%Y') %>% format('%j') %>% as.numeric
+gly$date <- gly$date - 229
+
+imi <- read_xlsx('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/Contaminants/imi_clean.xlsx') %>% select(-time.point, -notes)
+imi$date <- imi$date %>% as.Date(format = '%d.%m.%Y') %>% format('%j') %>% as.numeric
+imi$date <- imi$date - 229
+
+# filter(imi, site == 'LAKE')
+# filter(gly, site == 'LAKE')
+
+gly <- gly %>% left_join(treat, by = 'site') %>% filter(site %!in% c('E1','H1','LAKE'), date < 45)
+gly$gly.measured.ppm <- gly$gly.measured.ppb/1000
+gly$log.gly.measured <- log10p(gly$gly.measured.ppb)
+
+imi <- imi %>% left_join(treat, by = 'site') %>% filter(site %!in% c('C5','D1','LAKE'), date < 45)
+imi$log.imi.measured <- log10p(imi$imi.measured.ppb)
+
+ts.ponds.gly <- c('C1','C4','C8','D1','D4','D8','J4','J8','K4','K8') #ponds with 4-5 gly measurements over time 
+ts.ponds.imi <- c('E1','E4','E8','H1','H4','H8','J4','J8','K4','K8') #ponds with 4-5 imi measurements over time
+
+glyp1 <- filter(gly, date == 6)
+glyp2 <- filter(gly, date == 34)
+glyts <- filter(gly, site %in% ts.ponds.gly)
+imip1 <- filter(imi, date == 6)
+imip2 <- filter(imi, date == 34)
+imits <- filter(imi, site %in% ts.ponds.imi)
+
+plotfunctions::emptyPlot(xlim=c(5,43),ylim=range(glyts$log.gly.measured)*c(0.9,1.1),yaxt='n',xaxt='n',ann=F, bty='l')
+title(ylab=log[10](1+glyphosate)~(mu*g~L^-1),line=2.5)
+axis(2,cex.axis=1,lwd=0,lwd.ticks=1)
+axis(1,cex.axis=1,lwd=0,lwd.ticks=1)
+title(xlab="day", cex.lab=1,line=2.8)
+abline(v=pulse.dates[1:2],lty=3)
+for(i in 1:10){
+  pond <- unique(glyts$site)[i]
+  sub.sub <- filter(glyts, site == pond)
+  points(x=sub.sub$date,y=sub.sub$TP,type='o',lwd=1,pch=pchs[sub.sub$nut.num[1]],col=gly.cols[1])
+}
+points(x=lake$date,y=lake$TP,type='o',lwd=1,pch=16,col=1)
+legend(x=7,y=max(tmp$TP),bty='n',legend=c('low nutrient','high nutrient','source lake'),pch=c(1,0,16),lty=1,col=c('gray80','gray80','black'))
+text(x=pulse.dates[1],y=max(tmp$TP)*1.05,label=expression(italic(dose~1)),pos=4)
+text(x=pulse.dates[2],y=max(tmp$TP)*1.05,label=expression(italic(dose~2)),pos=4)
+
+for (i in 1:34){
+  tmp <- subset(gly, site == levels(gly$site)[i])
+  if(nrow(tmp) == 5){
+    points(log.gly.m~date.idx,tmp,type='l',col=alpha(cols[tmp$col],0.8),lwd=0.5,lty=tmp$lty)
+  }
+  points(log.gly.m~date.idx,tmp,type='p',pch=tmp$pch[1],col=alpha(cols[tmp$col],0.8),cex=1)
+}
+
 
 
 #### data exploration: correlations in the dataset ####
