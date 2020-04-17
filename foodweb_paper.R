@@ -131,7 +131,7 @@ data <- inner_join(FP,YSI, by = c('date','site')) %>%
 
 ## nutrients
 
-pdf('~/Desktop/nut.pdf',width=7,height = 10,pointsize = 12)
+#pdf('~/Desktop/nut.pdf',width=7,height = 10,pointsize = 12)
 par(mfrow=c(3,1),cex=1,mar=c(4,4,1,1))
 
 nut <- left_join(nut, treat)
@@ -188,7 +188,16 @@ for(i in 1:6){
 points(x=lake$date,y=lake$NP,type='o',lwd=1,pch=16,col=1)
 legend(x=8,y=max(tmp$NP),bty='n',legend=c('low nutrient','high nutrient','source lake'),pch=c(1,0,16),lty=1,col=c('gray80','gray80','black'))
 
-dev.off()
+#dev.off()
+
+## pesticides
+
+gly <- gly %>% left_join(treat, by = 'site')
+imi <- imi %>% left_join(treat, by = 'site') %>% filter(site %!in% c('C5','D1',''))
+filter(imi, site == 'LAKE')
+filter(gly, site == 'LAKE')
+ts.ponds <- 
+
 
 #### data exploration: correlations in the dataset ####
 
