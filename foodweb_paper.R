@@ -42,7 +42,7 @@ treat$pond.id <- 1:48
 #three.cols <- c('#058A51','#130CA6','#EB0C00')
 #library(wesanderson)
 #three.cols <- wes_palette('Zissou1',5)[c(3,1,5)]
-three.cols <- brewer.pal(3,'Dark2')[c(1,3,2)]
+three.cols <- brewer.pal(3,'Dark2')[c(2,3,1)]
 glycolfunc <- colorRampPalette(c("gray80", three.cols[1]))
 gly.cols <- glycolfunc(8)
 imicolfunc <- colorRampPalette(c("gray80", three.cols[2]))
@@ -51,6 +51,37 @@ bothcolfunc <- colorRampPalette(c("gray80", three.cols[3]))
 both.cols <- bothcolfunc(8)
 allcols <- c(gly.cols,gly.cols,imi.cols,imi.cols,both.cols,both.cols)
 pchs <- c(16,15)
+
+#### Figure panel: experimental design ####
+
+gly.doses <- c(0,0.04,0.1,0.3,0.7,2,5.5,15) #ppm
+imi.doses <- c(0,0.15,0.4,1,3,8,22,60) #ppb
+
+pdf('~/Desktop/figure1.pdf',width=5.5,height=6,pointsize = 12)
+plot(x=0,xlim=c(0,9),ylim=c(0,9),type='n',ann=F,yaxt='n',xaxt='n',bty='n')
+points(x=1:8,y=rep(8,8),pch=16,cex=4,col=gly.cols)
+points(x=1:8,y=rep(7,8),pch=15,cex=4,col=gly.cols)
+points(x=1:8,y=rep(5,8),pch=16,cex=4,col=imi.cols)
+points(x=1:8,y=rep(4,8),pch=15,cex=4,col=imi.cols)
+points(x=1:8,y=rep(2,8),pch=16,cex=4,col=both.cols)
+points(x=1:8,y=rep(1,8),pch=15,cex=4,col=both.cols)
+title(ylab='nutrient treatment',line=0.3,cex.lab=1.1)
+text(x=rep(-0.4,6),y=c(8,7,5,4,2,1),labels=rep(c('low','high'),3),pos=4,cex=0.8)
+text(x=1:8,y=rep(8,8),labels=as.character(gly.doses),cex=0.7)
+text(x=1:8,y=rep(7,8),labels=as.character(gly.doses),cex=0.7)
+text(x=1:8,y=rep(5,8),labels=as.character(imi.doses),cex=0.7)
+text(x=1:8,y=rep(4,8),labels=as.character(imi.doses),cex=0.7)
+text(x=1:8,y=rep(2.15,8),labels=as.character(gly.doses),cex=0.7)
+text(x=1:8,y=rep(1.85,8),labels=as.character(imi.doses),cex=0.7)
+text(x=1:8,y=rep(1.15,8),labels=as.character(gly.doses),cex=0.7)
+text(x=1:8,y=rep(0.85,8),labels=as.character(imi.doses),cex=0.7)
+text(x=rep(4.5,3),y=c(8.4,5.4,2.4),pos=3,labels=c('glyphosate only','imidacloprid only','both pesticides'),cex=1.1)
+text(x=0.5,y=6.3,pos=4,labels=make.italic(expression(numbers~indicate~target~concentrations~'in'~mg/L)),cex=0.7)
+text(x=0.5,y=3.3,pos=4,labels=make.italic(expression(numbers~indicate~target~concentrations~'in'~mu*g/L)),cex=0.7)
+text(x=0.5,y=0.3,pos=4,labels=make.italic('top number = glyphosate (ppm), bottom number = imidacloprid (ppb)'),cex=0.7)
+
+dev.off()
+
 
 #### nutrient and pesticide data ####
 
@@ -314,6 +345,11 @@ data <- inner_join(FP,YSI, by = c('date','site')) %>%
 data$o.nut <- as.ordered(data$nut.fac)
 
 #rescaling pesticides gradients from 0 to 1 to compare effect with nutrient factor
-data$
+data$sc.gly <- rescale(data$gly, c(0,1))
+data$sc.imi <- rescale(data$imi, c(0,1))
+
+#### some GAMMs ####
+
+gamp1 <- gam(logChla ~ o.nut + s(date,k=6) + ti(date,scl.gly, k=6) + ti(date,log.gly.measured, by = o.nut, k=6) + s(date, site, bs='fs',k=5, m=2), data=P1dat, method = 'REML')
 
 
