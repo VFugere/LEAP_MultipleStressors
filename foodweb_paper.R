@@ -16,6 +16,8 @@ library(readxl)
 library(sjPlot)
 library(sjlabelled)
 library(sjmisc)
+library(mgcv)
+library(itsadug)
 
 devtools::source_url('https://raw.githubusercontent.com/VFugere/Rfuncs/master/vif.R')
 devtools::source_url('https://raw.githubusercontent.com/VFugere/Rfuncs/master/utils.R')
@@ -81,7 +83,6 @@ text(x=0.5,y=3.3,pos=4,labels=make.italic(expression(numbers~indicate~target~con
 text(x=0.5,y=0.3,pos=4,labels=make.italic('top number = glyphosate (ppm), bottom number = imidacloprid (ppb)'),cex=0.7)
 
 dev.off()
-
 
 #### nutrient and pesticide data ####
 
@@ -339,7 +340,7 @@ data <- inner_join(FP,YSI, by = c('date','site')) %>%
   left_join(treat, by = c('site')) %>% 
   select(-gly.target.ppb,-imi.target.ppb,-water) %>%
   mutate(nut = as.numeric(factor(nut, levels=c('low','high')))) %>%
-  select(date, site, nut:pond.id, NEP:SPC.mean, greens:total, BA, AWCD:Amines_amides, everything())
+  select(date, site, gly:pond.id, NEP:SPC.mean, greens:total, BA, AWCD:Amines_amides, everything())
 
 #adding ordered factor for GAMs
 data$o.nut <- as.ordered(data$nut.fac)
@@ -348,8 +349,28 @@ data$o.nut <- as.ordered(data$nut.fac)
 data$sc.gly <- rescale(data$gly, c(0,1))
 data$sc.imi <- rescale(data$imi, c(0,1))
 
+#adding site factor
+data$site.f <- as.factor(data$site)
+
+#adding date.factor
+data$date.f <- as.factor(data$date)
+
 #### some GAMMs ####
 
-gamp1 <- gam(logChla ~ o.nut + s(date,k=6) + ti(date,scl.gly, k=6) + ti(date,log.gly.measured, by = o.nut, k=6) + s(date, site, bs='fs',k=5, m=2), data=P1dat, method = 'REML')
+ba.model <- gam(log10(BA) ~ o.nut + s(date,k=6) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=6) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=6) + ti(date,sc.gly,sc.imi, k=6) + ti(date,sc.gly,sc.imi, by = o.nut, k=6) + s(date, site.f, bs='fs',k=5, m=2), data=data, method = 'REML')
 
+ba.model <- gam(log10(BA) ~ o.nut + s(date,k=4) + ti(date,sc.gly, k=5) + ti(date,sc.gly, by = o.nut, k=5) + ti(date,sc.imi, k=4) + ti(date,sc.imi, by = o.nut, k=4) + ti(date,sc.gly,sc.imi, k=4) + s(date, site.f, bs='fs',k=4, m=2), data=data, method = 'REML')
+summary(ba.model)
+gam.check(ba.model)
+plot(ba.model)
 
+library(lme4)
+ba.mod.lin <- lmer(log10(BA) ~ date + nut.fac + date.f:sc.gly + date.f:sc.imi + date.f:sc.gly:sc.imi + date.f:sc.gly:nut.fac +
+                     date.f:sc.imi:nut.fac + date.f:sc.gly:sc.imi:nut.fac + (1|site.f),data)
+summary(ba.mod.lin)
+plot_model(ba.mod.lin)
+
+nep.mod.lin <- lmer(log1p(NEP) ~ date + nut.fac + date.f:sc.gly + date.f:sc.imi + date.f:sc.gly:sc.imi + date.f:sc.gly:nut.fac +
+                     date.f:sc.imi:nut.fac + date.f:sc.gly:sc.imi:nut.fac + (1|site.f),data)
+summary(ba.mod.lin)
+plot_model(nep.mod.lin)
