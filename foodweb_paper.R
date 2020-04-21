@@ -2,17 +2,21 @@
 ## Vincent Fugère 2019-2020
 
 rm(list=ls())
+
 library(tidyverse)
-library(scales)
-library(shape)
-library(readxl)
-library(RColorBrewer)
-library(plotrix)
-library(randomcoloR)
 library(skimr)
 library(magrittr)
-library(corrgram)
 library(readxl)
+
+library(scales)
+library(shape)
+library(RColorBrewer)
+library(viridis)
+library(plotrix)
+
+library(corrgram)
+library(lme4)
+library(performance)
 library(sjPlot)
 library(sjlabelled)
 library(sjmisc)
@@ -352,8 +356,11 @@ data$sc.imi <- rescale(data$imi, c(0,1))
 #adding site factor
 data$site.f <- as.factor(data$site)
 
-#adding date.factor
+#adding date factor
 data$date.f <- as.factor(data$date)
+
+#reordering
+data <- select(data, date:pond.id,o.nut:date.f,everything())
 
 #### some GAMMs ####
 
@@ -364,13 +371,76 @@ summary(ba.model)
 gam.check(ba.model)
 plot(ba.model)
 
-library(lme4)
-ba.mod.lin <- lmer(log10(BA) ~ date + nut.fac + date.f:sc.gly + date.f:sc.imi + date.f:sc.gly:sc.imi + date.f:sc.gly:nut.fac +
-                     date.f:sc.imi:nut.fac + date.f:sc.gly:sc.imi:nut.fac + (1|site.f),data)
-summary(ba.mod.lin)
-plot_model(ba.mod.lin)
+ba.model <- gam(log10(BA) ~ o.nut + te(date,sc.gly,sc.imi, by = o.nut, k=4) + s(date, site.f, bs='fs',k=4, m=2), data=data, method = 'REML')
+summary(ba.model)
+gam.check(ba.model)
+plot(ba.model)
+fit1 <- fitted(ba.model)
 
-nep.mod.lin <- lmer(log1p(NEP) ~ date + nut.fac + date.f:sc.gly + date.f:sc.imi + date.f:sc.gly:sc.imi + date.f:sc.gly:nut.fac +
+ba.model2 <- gam(log10(BA) ~ o.nut + s(date,k=4) + s(sc.gly, k = 4) + s(sc.imi, k = 4) + ti(date,sc.gly, k=4) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=4) + ti(date,sc.imi, by = o.nut, k=4) + ti(date,sc.gly,sc.imi, k=4) + ti(date,sc.gly,sc.imi, by = o.nut, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=data, method = 'REML')
+fit2 <- fitted(ba.model2)
+summary(ba.model2)
+gam.check(ba.model2)
+
+plot(fit2~fit1)
+abline(a=0,b=1)
+
+ba.model3 <- gam(log10(BA) ~ o.nut + s(date,k=4) + s(sc.gly, k = 4) + s(sc.imi, k = 4) + ti(date,sc.gly, k=4) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=4) + ti(date,sc.imi, by = o.nut, k=4) + ti(date,sc.gly,sc.imi, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=data, method = 'REML')
+fit3 <- fitted(ba.model3)
+summary(ba.model3)
+gam.check(ba.model3)
+
+plot(fit2~fit3)
+
+fitted <- as.data.frame(predict(ba.model3, se.fit = T,exclude='s(date,site)'))
+fitted$lwr <- fitted$fit - 1.96*fitted$se.fit
+fitted$upr <- fitted$fit + 1.96*fitted$se.fit
+ylims <- range(c(fitted$lwr,fitted$upr))
+
+plot_smooth(ba.model3, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=gly.cols[1],print.summary = F,hide.label = T,yaxt='n',xaxt='n',cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims)
+plot_smooth(ba.model3, view="date", cond=list('sc.gly'=0.5,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=gly.cols[4],add=T)
+plot_smooth(ba.model3, view="date", cond=list('sc.gly'=1,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=gly.cols[8],add=T)
+
+plot_smooth(ba.model3, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=gly.cols[1],print.summary = F,hide.label = T,yaxt='n',xaxt='n',cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims)
+plot_smooth(ba.model3, view="date", cond=list('sc.gly'=0.5,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=gly.cols[4],add=T)
+plot_smooth(ba.model3, view="date", cond=list('sc.gly'=1,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=gly.cols[8],add=T)
+
+## contour plots
+
+zlims <- range(fitted(ba.model3))
+par(mfrow=c(2,6),mar=c(2,2,2,2),oma=c(2,2,0,0),cex=1)
+fvisgam(ba.model3, view = c('sc.gly','sc.imi'), cond = list('date' = 1, 'o.nut' = 'low'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = inferno(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
+mtext('LN day 1',3,cex=0.7)
+fvisgam(ba.model3, view = c('sc.gly','sc.imi'), cond = list('date' = 7, 'o.nut' = 'low'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = inferno(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
+mtext('LN day 7',3,cex=0.7)
+fvisgam(ba.model3, view = c('sc.gly','sc.imi'), cond = list('date' = 15, 'o.nut' = 'low'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = inferno(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
+mtext('LN day 15',3,cex=0.7)
+fvisgam(ba.model3, view = c('sc.gly','sc.imi'), cond = list('date' = 30, 'o.nut' = 'low'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = inferno(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
+mtext('LN day 30',3,cex=0.7)
+fvisgam(ba.model3, view = c('sc.gly','sc.imi'), cond = list('date' = 35, 'o.nut' = 'low'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = inferno(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
+mtext('LN day 35',3,cex=0.7)
+fvisgam(ba.model3, view = c('sc.gly','sc.imi'), cond = list('date' = 43, 'o.nut' = 'low'), zlim=zlims, add.color.legend=T,hide.label=T,plot.type = 'contour', lwd=1.5,color = inferno(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
+mtext('LN day 43',3,cex=0.7)
+fvisgam(ba.model3, view = c('sc.gly','sc.imi'), cond = list('date' = 1, 'o.nut' = 'high'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = inferno(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
+mtext('HN day 1',3,cex=0.7)
+fvisgam(ba.model3, view = c('sc.gly','sc.imi'), cond = list('date' = 7, 'o.nut' = 'high'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = inferno(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
+mtext('HN day 7',3,cex=0.7)
+fvisgam(ba.model3, view = c('sc.gly','sc.imi'), cond = list('date' = 15, 'o.nut' = 'high'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = inferno(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
+mtext('HN day 15',3,cex=0.7)
+fvisgam(ba.model3, view = c('sc.gly','sc.imi'), cond = list('date' = 30, 'o.nut' = 'high'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = inferno(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
+mtext('HN day 30',3,cex=0.7)
+fvisgam(ba.model3, view = c('sc.gly','sc.imi'), cond = list('date' = 35, 'o.nut' = 'high'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = inferno(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
+mtext('HN day 35',3,cex=0.7)
+fvisgam(ba.model3, view = c('sc.gly','sc.imi'), cond = list('date' = 43, 'o.nut' = 'high'), zlim=zlims, add.color.legend=T,hide.label=T,plot.type = 'contour', lwd=1.5,color = inferno(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
+mtext('HN day 43',3,cex=0.7)
+mtext('glyphosate',1,outer=T,line=1)
+mtext('imidacloprid',2,outer=T)
+
+## linear model
+
+ba.mod.lin <- lmer(log10(BA) ~ date.f + nut.fac + date.f:nut.fac + date.f:sc.gly + date.f:sc.imi + date.f:sc.gly:sc.imi + date.f:sc.gly:nut.fac +
                      date.f:sc.imi:nut.fac + date.f:sc.gly:sc.imi:nut.fac + (1|site.f),data)
-summary(ba.mod.lin)
-plot_model(nep.mod.lin)
+ba.mod.lin <- lmer(log10(BA) ~ o.nut + date.f:o.nut + date.f:sc.gly + date.f:sc.imi + date.f:sc.gly:sc.imi + date.f:sc.gly:o.nut +
+                     date.f:sc.imi:o.nut + date.f:sc.gly:sc.imi:o.nut + (1|site.f),data)
+plot_model(ba.mod.lin)
+performance(ba.mod.lin)
