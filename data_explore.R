@@ -44,7 +44,7 @@ treat$pond.id <- 1:48
 #three.cols <- c('#058A51','#130CA6','#EB0C00')
 #library(wesanderson)
 #three.cols <- wes_palette('Zissou1',5)[c(3,1,5)]
-three.cols <- brewer.pal(3,'Dark2')[c(1,3,2)]
+three.cols <- brewer.pal(3,'Dark2')[c(2,3,1)]
 glycolfunc <- colorRampPalette(c("gray80", three.cols[1]))
 gly.cols <- glycolfunc(8)
 imicolfunc <- colorRampPalette(c("gray80", three.cols[2]))
@@ -118,7 +118,23 @@ data <- inner_join(FP,YSI, by = c('date','site')) %>%
   left_join(treat, by = c('site')) %>% 
   select(-gly.target.ppb,-imi.target.ppb,-water) %>%
   mutate(nut = as.numeric(factor(nut, levels=c('low','high')))) %>%
-  select(date, site, nut:pond.id, NEP:SPC.mean, greens:total, BA, AWCD:Amines_amides, everything())
+  select(date, site, gly:pond.id, NEP:SPC.mean, greens:total, BA, AWCD:Amines_amides, everything())
+
+#adding ordered factor for GAMs
+data$o.nut <- as.ordered(data$nut.fac)
+
+#rescaling pesticides gradients from 0 to 1 to compare effect with nutrient factor
+data$sc.gly <- rescale(data$gly, c(0,1))
+data$sc.imi <- rescale(data$imi, c(0,1))
+
+#adding site factor
+data$site.f <- as.factor(data$site)
+
+#adding date factor
+data$date.f <- as.factor(data$date)
+
+#reordering
+data <- select(data, date:pond.id,o.nut:date.f,everything())
 
 #### data exploration: correlations in the dataset ####
 
@@ -137,6 +153,50 @@ for(d in Sampling.dates){
 }
 dev.off()
 
+
+#### finding the optimal gamm ####
+
+#all smooths + interactions
+ba.model <- gam(log10(BA) ~ o.nut + s(date,k=4) + s(sc.gly, k = 4) + s(sc.imi, k = 4) + ti(date,sc.gly, k=4) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=4) + ti(date,sc.imi, by = o.nut, k=4) + ti(date,sc.gly,sc.imi, k=4) + ti(date,sc.gly,sc.imi, by = o.nut, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=data, method = 'REML')
+fit <- fitted(ba.model)
+summary(ba.model)
+gam.check(ba.model)
+
+#no 3 way interaction
+ba.model2 <- gam(log10(BA) ~ o.nut + s(date,k=4) + s(sc.gly, k = 4) + s(sc.imi, k = 4) + ti(date,sc.gly, k=4) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=4) + ti(date,sc.imi, by = o.nut, k=4) + ti(date,sc.gly,sc.imi, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=data, method = 'REML')
+fit2 <- fitted(ba.model2)
+summary(ba.model2)
+gam.check(ba.model2)
+plot(fit2~fit)
+
+#not eactly sure what the te() in this one does...
+ba.model3 <- gam(log10(BA) ~ nut.fac + te(date,sc.gly,sc.imi, by = nut.fac, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=data, method = 'REML')
+summary(ba.model3)
+gam.check(ba.model3)
+fit3 <- fitted(ba.model3)
+plot(fit3~fit)
+
+#no smooth for overall effect of pesticides, only interactions with time. Not sure this is appropriate
+ba.model4 <- gam(log10(BA) ~ o.nut + s(date,k=4) + ti(date,sc.gly, k=4) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=4) + ti(date,sc.imi, by = o.nut, k=4) + ti(date,sc.gly,sc.imi, k=4) + ti(date,sc.gly,sc.imi, by = o.nut, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=data, method = 'REML')
+fit4 <- fitted(ba.model4)
+summary(ba.model4)
+gam.check(ba.model4)
+plot(fit4~fit)
+
+#te approach instead
+ba.model5 <- gam(log10(BA) ~ nut.fac + te(date,sc.gly, by = nut.fac, k=4) + te(date,sc.imi, by = nut.fac, k=4) + ti(date,sc.gly,sc.imi, by = nut.fac, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=data, method = 'REML')
+fit5 <- fitted(ba.model5)
+summary(ba.model5)
+gam.check(ba.model5)
+plot(fit5~fit)
+
+#changing s to ti
+ba.model6 <- gam(log10(BA) ~ o.nut + ti(date,k=4) + ti(sc.gly, k = 4) + ti(sc.imi, k = 4) + ti(date,sc.gly, k=4) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=4) + ti(date,sc.imi, by = o.nut, k=4) + ti(date,sc.gly,sc.imi, k=4) + ti(date,sc.gly,sc.imi, by = o.nut, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=data, method = 'REML')
+summary(ba.model6)
+gam.check(ba.model6)
+plot(predict(ba.model6)~predict(ba.model))
+
+AIC(ba.model,ba.model2,ba.model3,ba.model4,ba.model5,ba.model6)
 
 #for talk
 vars <- c('total','BA','NEP','use','Glycogen')
