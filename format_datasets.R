@@ -103,17 +103,31 @@ rm(EP2)
 
 #### zooplankton ####
 
-
+ZOO <- read_xlsx('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/Zooplankton/LEAP2016-zoo-abundance_clean-perL_final.xlsx')
+ZOO$day_adj <- ZOO$day_exp
+ZOO$day_adj[ZOO$day_exp == 3] <- 1
+ZOO$day_adj[ZOO$day_exp == 9] <- 7
+ZOO$day_adj[ZOO$day_exp == 16] <- 15
+ZOO$day_adj[ZOO$day_exp == 31] <- 30
+ZOO$day_adj[ZOO$day_exp == 36] <- 35
+ZOO$day_adj[ZOO$day_exp == 44] <- 43
+ZOO <- select(ZOO, site:day_exp, day_adj, everything())
+colnames(ZOO)[6:31] <- str_to_sentence(colnames(ZOO)[6:31])
+colnames(ZOO) <- str_replace(colnames(ZOO), 'spp.', 'sp')
+colnames(ZOO) <- str_replace(colnames(ZOO), 'spp', 'sp')
+colnames(ZOO) <- str_replace(colnames(ZOO), 'adulte', 'adult')
+colnames(ZOO) <- str_replace(colnames(ZOO), ' ', '_')
 
 #### bind and clean ####
 
 merged.data <- inner_join(FP,YSI, by = c('date','site')) %>%
   inner_join(FC, by = c('date','site')) %>%
   inner_join(EP, by = c('date','site')) %>%
+  inner_join(select(ZOO, -date, -time_pt, -day_exp), by = c('site', 'date' = 'day_adj')) %>%
   left_join(treat, by = c('site')) %>% 
   select(-gly.target.ppb,-imi.target.ppb,-water) %>%
   mutate(nut = as.numeric(factor(nut, levels=c('low','high')))) %>%
-  select(date, site, gly:pond.id, NEP:SPC.mean, greens:total, BA, AWCD:Amines_amides, everything())
+  select(date, site, gly:pond.id, NEP:SPC.mean, BA, AWCD:Amines_amides, greens:total, total_zoo_adult:total_rotifer, Alona_sp:Monostyla_quadridentata, everything())
 
 #### output data ####
 
