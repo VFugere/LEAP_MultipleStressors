@@ -11,9 +11,9 @@ library(scales)
 library(shape)
 library(RColorBrewer)
 library(viridis)
+library(wesanderson)
 library(plotrix)
 
-library(corrgram)
 library(lme4)
 library(performance)
 library(sjPlot)
@@ -21,7 +21,6 @@ library(sjlabelled)
 library(sjmisc)
 library(mgcv)
 library(itsadug)
-library(mgcViz)
 
 devtools::source_url('https://raw.githubusercontent.com/VFugere/Rfuncs/master/vif.R')
 devtools::source_url('https://raw.githubusercontent.com/VFugere/Rfuncs/master/utils.R')
@@ -291,11 +290,11 @@ ba.model <- gam(log10(BA) ~ o.nut + ti(date) + ti(sc.gly) + ti(sc.imi) + ti(date
 gam.check(ba.model)
 summary(ba.model)
 
-chla.model <- gam(log10(total) ~ o.nut + ti(date,k=5) + ti(sc.gly, k = 5) + ti(sc.imi, k = 5) + ti(date,sc.gly, k=5) + ti(date,sc.gly, by = o.nut, k=5) + ti(date,sc.imi, k=5) + ti(date,sc.imi, by = o.nut, k=5) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=5) + s(site.f, bs='re'), data=merged.data, method = 'REML')
+chla.model <- gam(log10(total) ~ o.nut + ti(date,k=6) + ti(sc.gly, k = 3) + ti(sc.imi, k = 3) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=6) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(site.f, bs='re'), data=merged.data, method = 'REML')
 gam.check(chla.model)
 summary(chla.model)
 
-ba.model <- gam(log10(BA) ~ o.nut + ti(date,k=5) + ti(sc.gly, k = 5) + ti(sc.imi, k = 5) + ti(date,sc.gly, k=5) + ti(date,sc.gly, by = o.nut, k=5) + ti(date,sc.imi, k=5) + ti(date,sc.imi, by = o.nut, k=5) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=5) + s(site.f, bs='re'), data=merged.data, method = 'REML')
+ba.model <- gam(log10(BA) ~ o.nut + ti(date,k=6) + ti(sc.gly, k = 3) + ti(sc.imi, k = 3) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=6) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(site.f, bs='re'), data=merged.data, method = 'REML')
 gam.check(ba.model)
 summary(ba.model)
 
@@ -308,29 +307,29 @@ VF.gam.plot <- function(model.name, varname){
   fitted$upr <- fitted$fit + 1.96*fitted$se.fit
   #ylims <- range(c(fitted$lwr,fitted$upr))
   ylims <- range(fitted$fit)
-  gly.cols.plot <- glycolfunc(8)
-  imi.cols.plot <- imicolfunc(8)
-  both.cols.plot <- bothcolfunc(8)
-  vals <- seq(0,1,length.out=8)
+  vals <- seq(0,1,length.out=30) #how many lines to draw?
+  gly.cols.plot <- glycolfunc(length(vals))
+  imi.cols.plot <- imicolfunc(length(vals))
+  both.cols.plot <- bothcolfunc(length(vals))
   plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=gly.cols.plot[1],print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims,se=0)
-  for(i in 2:8){plot_smooth(model.name, view="date", cond=list('sc.gly'=vals[i],'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=gly.cols.plot[i],add=T,print.summary = F,se=0)}
-  legend('topleft',legend='LN',bty='n')
+  for(i in 2:length(vals)){plot_smooth(model.name, view="date", cond=list('sc.gly'=vals[i],'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=gly.cols.plot[i],add=T,print.summary = F,se=0)}
+  legend('topleft',legend='low',bty='n')
   mtext(varname,2,line=2.5)
   plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=gly.cols.plot[1],print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims,se=0)
-  for(i in 2:8){plot_smooth(model.name, view="date", cond=list('sc.gly'=vals[i],'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=gly.cols.plot[i],add=T,print.summary = F,se=0)}
-  legend('topleft',legend='HN',bty='n')
+  for(i in 2:length(vals)){plot_smooth(model.name, view="date", cond=list('sc.gly'=vals[i],'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=gly.cols.plot[i],add=T,print.summary = F,se=0)}
+  legend('topleft',legend='high',bty='n')
   plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=imi.cols.plot[1],print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims,se=0)
-  for(i in 2:8){plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=vals[i],'o.nut'='low'), rm.ranef=TRUE, rug=F,col=imi.cols.plot[i],add=T,print.summary = F,se=0)}
-  legend('topleft',legend='LN',bty='n')
+  for(i in 2:length(vals)){plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=vals[i],'o.nut'='low'), rm.ranef=TRUE, rug=F,col=imi.cols.plot[i],add=T,print.summary = F,se=0)}
+  legend('topleft',legend='low',bty='n')
   plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=imi.cols.plot[1],print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims,se=0)
-  for(i in 2:8){plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=vals[i],'o.nut'='high'), rm.ranef=TRUE, rug=F,col=imi.cols.plot[i],add=T,print.summary = F,se=0)}
-  legend('topleft',legend='HN',bty='n')
+  for(i in 2:length(vals)){plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=vals[i],'o.nut'='high'), rm.ranef=TRUE, rug=F,col=imi.cols.plot[i],add=T,print.summary = F,se=0)}
+  legend('topleft',legend='high',bty='n')
   plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=both.cols.plot[1],print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims,se=0)
-  for(i in 2:8){plot_smooth(model.name, view="date", cond=list('sc.gly'=vals[i],'sc.imi'=vals[i],'o.nut'='low'), rm.ranef=TRUE, rug=F,col=both.cols.plot[i],add=T,print.summary = F,se=0)}
-  legend('topleft',legend='LN',bty='n')
+  for(i in 2:length(vals)){plot_smooth(model.name, view="date", cond=list('sc.gly'=vals[i],'sc.imi'=vals[i],'o.nut'='low'), rm.ranef=TRUE, rug=F,col=both.cols.plot[i],add=T,print.summary = F,se=0)}
+  legend('topleft',legend='low',bty='n')
   plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=both.cols.plot[1],print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims,se=0)
-  for(i in 2:8){plot_smooth(model.name, view="date", cond=list('sc.gly'=vals[i],'sc.imi'=vals[i],'o.nut'='high'), rm.ranef=TRUE, rug=F,col=both.cols.plot[i],add=T,print.summary = F,se=0)}
-  legend('topleft',legend='HN',bty='n')
+  for(i in 2:length(vals)){plot_smooth(model.name, view="date", cond=list('sc.gly'=vals[i],'sc.imi'=vals[i],'o.nut'='high'), rm.ranef=TRUE, rug=F,col=both.cols.plot[i],add=T,print.summary = F,se=0)}
+  legend('topleft',legend='high',bty='n')
 }
 
 pdf('~/Desktop/gamms.pdf',width=15,height=10,pointsize = 12)
@@ -340,28 +339,69 @@ VF.gam.plot(model.name=chla.model, varname=expression(log[10]~chlorophyll~italic
 mtext('date',1,outer=T,line=0.5)
 dev.off()
 
+VF.gam.plot.simpler <- function(model.name, varname){
+  #fitted <- as.data.frame(predict(model.name, se.fit = T,exclude='s(date,site)'))
+  fitted <- as.data.frame(predict(model.name, se.fit = T,exclude='s(site.f)'))
+  fitted$lwr <- fitted$fit - 1.96*fitted$se.fit
+  fitted$upr <- fitted$fit + 1.96*fitted$se.fit
+  ylims <- range(c(fitted$lwr,fitted$upr))
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=gly.cols[1],print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=1,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=gly.cols[8],add=T,print.summary = F)
+  legend('topleft',legend='low',bty='n')
+  mtext(varname,2,line=2.5)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=gly.cols[1],print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=1,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=gly.cols[8],add=T,print.summary = F)
+  legend('topleft',legend='high',bty='n')
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=imi.cols[1],print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=1,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=imi.cols[8],add=T,print.summary = F)
+  legend('topleft',legend='low',bty='n')
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=imi.cols[1],print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=1,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=imi.cols[8],add=T,print.summary = F)
+  legend('topleft',legend='high',bty='n')
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=both.cols[1],print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=1,'sc.imi'=1,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=both.cols[8],add=T,print.summary = F)
+  legend('topleft',legend='low',bty='n')
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=both.cols[1],print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=1,'sc.imi'=1,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=both.cols[8],add=T,print.summary = F)
+  legend('topleft',legend='high',bty='n')
+}
+
+pdf('~/Desktop/gamms_simpler.pdf',width=15,height=10,pointsize = 12)
+par(mfrow=c(3,6),mar=c(2,2,2,2),oma=c(2,2,0,0),cex=1)
+VF.gam.plot.simpler(model.name=ba.model, varname=expression(log[10]~bacterial~abundance~(cells/mu*L)))
+VF.gam.plot.simpler(model.name=chla.model, varname=expression(log[10]~chlorophyll~italic(a)~(mu*g/L)))
+mtext('date',1,outer=T,line=0.5)
+dev.off()
+
 #### contour plots ####
 
-pdf('~/Desktop/contourplots.pdf',width=12,height=4,pointsize = 12)
+heatcolfunc <- colorRampPalette(brewer.pal(11, 'RdYlBu')[11:1])
+heat.cols <- heatcolfunc(50)
+#heat.cols <- wes_palette('Zissou1', 50, 'continuous')
+#heat.cols <- viridis(50)
 
-par(mfrow=c(2,6),mar=c(0.1,0.1,0.1,0.1),oma=c(2,2,2,2),cex=1,xpd=NA)
-zlims <- range(fitted(chla.model))
-for(nut.lvl in c('low','high')){
-  for(date.x in Sampling.dates){
-    fvisgam(chla.model, view = c('sc.gly','sc.imi'), too.far=0.28,cond = list('date' = date.x, 'o.nut' = nut.lvl), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = viridis(100), main = NULL,rm.ranef = T,dec=1,print.summary = F,yaxt='n',xaxt='n')
-    if(nut.lvl == 'low'){legend('top',bty='n',legend = paste('day',date.x,' '),cex=1,inset=-0.2)}
-    if(date.x == 43){legend('right',bty='n',legend = paste(nut.lvl,'nutrient',sep=' '),cex=1,inset=-0.2)}
+VF.cont.plot <- function(model.name){
+  zlims <- range(fitted(model.name))
+  for(nut.lvl in c('low','high')){
+    for(date.x in Sampling.dates){
+      fvisgam(model.name, view = c('sc.gly','sc.imi'), too.far=0.25,cond = list('date' = date.x, 'o.nut' = nut.lvl), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = heat.cols, main = NULL,rm.ranef = T,dec=1,print.summary = F,yaxt='n',xaxt='n',xlab=NULL,ylab=NULL)
     }
+  }
+  mtext('glyphosate',1,outer=T,line=0.5)
+  mtext('imidacloprid',2,outer=T,line=0.5)
+  mtext(paste('day',Sampling.dates,' '),side=3,outer=T,line=0.5,at=seq(0.09,0.92,length.out = 6),adj=0.5)
+  mtext(c('low nut','high nut'),side=4,outer=T,line=0.5,at=c(0.75,0.25))
 }
-mtext('glyphosate',1,outer=T,line=0.5)
-mtext('imidacloprid',2,outer=T,line=0.5)
 
+pdf('~/Desktop/contourplots.pdf',width=7.5,height=3,pointsize = 12,onefile = T)
+par(mfrow=c(2,6),mar=c(0.1,0.1,0.1,0.1),oma=c(2,2,2,2),cex=1,xpd=T)
+VF.cont.plot(ba.model)
+VF.cont.plot(chla.model)
 dev.off()
 
 #####
 
-pvisgam(ba.model)
-
+vis.gam(ba.model)
 
 #chla
 
