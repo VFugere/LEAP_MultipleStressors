@@ -1,151 +1,96 @@
 ## Code to analyze LEAP 2016 MS data
+## Vincent Fugère 2019-2020
+## This is a raw/rough data exploration script:
 ## Older code for UQAM LEAP talk in April 2019
 ## Plus some new raw code for data exploration
 ## Clean analyses are in script foodweb_paper.R
 
 rm(list=ls())
+
 library(tidyverse)
-library(scales)
-library(shape)
-library(readxl)
-library(RColorBrewer)
-library(plotrix)
-library(randomcoloR)
 library(skimr)
 library(magrittr)
+
+library(scales)
+library(shape)
+library(RColorBrewer)
+library(viridis)
+library(plotrix)
+
 library(corrgram)
-library(readxl)
+library(lme4)
+library(performance)
 library(sjPlot)
 library(sjlabelled)
 library(sjmisc)
+library(mgcv)
+library(itsadug)
+library(mgcViz)
 
 devtools::source_url('https://raw.githubusercontent.com/VFugere/Rfuncs/master/vif.R')
 devtools::source_url('https://raw.githubusercontent.com/VFugere/Rfuncs/master/utils.R')
 
-#### basic data
+#### load data ####
 
-Sampling.dates <-c('17/08/16','23/08/16','31/08/16','15/09/16','20/09/16','28/09/16')
-Sampling.dates <- as.Date(Sampling.dates, format = '%d/%m/%y')
-Sampling.dates <- format(Sampling.dates, '%j')
-Sampling.dates <- as.numeric(Sampling.dates)
-Sampling.dates <- Sampling.dates - 229 #day 1 of exp is Julian day 230
+load('~/Google Drive/Recherche/LEAP Postdoc/2016/MSdata.RData')
 
-pulse.dates <- as.Date(c('22/08/2016','19/09/2016','30/09/2016'), format = '%d/%m/%Y')
-pulse.dates <- format(pulse.dates, '%j')
-pulse.dates <- as.numeric(pulse.dates) - 229
+#### colour palette & plotting parameters ####
 
-treat <- read.csv('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/LEAP2016treatments.csv', stringsAsFactors = F) %>%
-  rename('site' = pond,'nut' = nut.f, 'gly' = gly.lvl, 'imi' = imi.lvl, 'gly.target.ppb' = gly.conc, 'imi.target.ppb' = imi.conc) %>%
-  select(-nut.ug.P,-nut.rel,-array,-nb)
-treat$nut.fac <- factor(treat$nut, levels = c('low','high'))
-treat$nut.num <- as.numeric(treat$nut.fac)
-treat$pond.id <- 1:48
+# mauve <- brewer.pal(9,'BuPu')[8]
+# jaune <- brewer.pal(11,'RdYlBu')[6]
+# vert <- brewer.pal(11,'RdYlGn')[11]
+# rouge <- brewer.pal(11,'RdYlBu')[1]
+# four.cols <- c(jaune,rouge,mauve,vert)
 
 #three.cols <- c('#058A51','#130CA6','#EB0C00')
 #library(wesanderson)
 #three.cols <- wes_palette('Zissou1',5)[c(3,1,5)]
-three.cols <- brewer.pal(3,'Dark2')[c(2,3,1)]
-glycolfunc <- colorRampPalette(c("gray80", three.cols[1]))
-gly.cols <- glycolfunc(8)
-imicolfunc <- colorRampPalette(c("gray80", three.cols[2]))
-imi.cols <- imicolfunc(8)
-bothcolfunc <- colorRampPalette(c("gray80", three.cols[3]))
-both.cols <- bothcolfunc(8)
+#three.cols <- brewer.pal(3,'Dark2')[c(2,3,1)]
+#four.cols <- c('gray80',three.cols)
+
+# glycolfunc <- colorRampPalette(c(four.cols[1], four.cols[2]))
+# gly.cols <- glycolfunc(8)
+# imicolfunc <- colorRampPalette(c(four.cols[1], four.cols[3]))
+# imi.cols <- imicolfunc(8)
+# bothcolfunc <- colorRampPalette(c(four.cols[1], four.cols[4]))
+# both.cols <- bothcolfunc(8)
+
+pchs <- c(1,0)
+
+gly.cols <- c('gray90',brewer.pal(9, 'Reds')[2:8])
+imi.cols <- c('gray90',brewer.pal(9, 'Blues')[2:8])
+both.cols <- c('gray90',brewer.pal(9, 'Greens')[2:8])
+
+glycolfunc <- colorRampPalette(gly.cols)
+imicolfunc <- colorRampPalette(imi.cols)
+bothcolfunc <- colorRampPalette(both.cols)
+
 allcols <- c(gly.cols,gly.cols,imi.cols,imi.cols,both.cols,both.cols)
-pchs <- c(16,15)
 
-#### YSI & metab data ####
-
-YSI <- read.csv('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/YSI_exp.csv',header=T,stringsAsFactors=F)
-YSI$date <- sapply(strsplit(YSI$time, '[ ]'), function(x) x[1])
-YSI$time <- sapply(strsplit(YSI$time, '[ ]'), function(x) x[2])
-YSI[YSI$pond == 'F1','pond'] <- 'H3'
-names(YSI)[7] <- 'site' #to be consistent with other data frames
-YSI$date <- as.Date(YSI$date, format = '%d/%m/%Y')
-YSI$date <- format(YSI$date, '%j')
-YSI$date <- as.numeric(YSI$date)
-YSI$date <- YSI$date - 229 #day 1 of exp is Julian day 230
-YSI <- YSI[YSI$date < 45,]
-# adding NEP
-YSI$period <- as.factor(YSI$period)
-YSI$TP <- as.factor(YSI$date)
-YSI <- YSI %>% group_by(TP, site) %>%
-  mutate(NEP = DO.mg.L[2] - DO.mg.L[1], pH.diff = pH[2] - pH[1], pH.mean = mean(pH[1],pH[2]), temp.mean = mean(temp.C[1],temp.C[2]), DO.mean = mean(DO.mg.L[1],DO.mg.L[2]), SPC.mean = mean(SPC.uS.cm[1],SPC.uS.cm[2])) %>%
-  ungroup
-YSI <- YSI[YSI$period != 'dusk',]
-#correcting for offset in 5th time point due to calibration problems.
-YSI$NEP[YSI$date == 35] <- YSI$NEP[YSI$date == 35] - 1
-YSI <- YSI %>% select(date,site,NEP:SPC.mean)
-
-#### fluoroprobe data ####
-
-FP <- read.csv('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/fluoroprobe.csv',header=T,stringsAsFactors=F) %>% select(-X) %>% as.data.frame
-FP$date <- as.Date(FP$date, format = '%d/%m/%Y')
-FP$date <- format(FP$date, '%j')
-FP$date <- as.numeric(FP$date)
-FP$date <- FP$date - 229 #day 1 of exp is Julian day 230
-FP[FP$site == 'F1','site'] <- 'H3'
-FP <- filter(FP, site %!in% c('LAKE','WELL'))
-FP[FP$date == 2,'date'] <- 1
-FP[FP$date == 8,'date'] <- 7
-FP <- FP[order(FP$date),]
-FP <- select(FP, date,site,greens:cryptos,total) %>%
-  filter(date %in% Sampling.dates)
-
-#### flow cytometry data ####
-
-FC <- read_xlsx('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/bacterial_counts.xlsx')
-FC[FC$pond == 'F1','pond'] <- 'H3'
-FC <- select(FC, day, pond, mean.cells.ul) %>% 
-  filter(!is.na(mean.cells.ul)) %>%
-  mutate('day' = as.numeric(day)) %>% 
-  rename('date' = day, 'site' = pond, 'BA' = mean.cells.ul) %>%
-  filter(date %in% Sampling.dates) %>% arrange(date,site)
-
-#### ecoplates data ####
-
-EP <- read_xlsx('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/Ecoplates/Ecoplates_clean.xlsx', sheet = 'by_substrate')
-EP2 <- read_xlsx('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/Ecoplates/Ecoplates_clean.xlsx', sheet = 'by_guild') %>% select(date:Amines_amides)
-EP <- left_join(EP, EP2, by = c('date','site')) %>%
-  filter(date %in% Sampling.dates) %>% arrange(date,site)
-rm(EP2)
-
-#### bind and clean ####
-
-data <- inner_join(FP,YSI, by = c('date','site')) %>%
-  inner_join(FC, by = c('date','site')) %>%
-  inner_join(EP, by = c('date','site')) %>%
-  left_join(treat, by = c('site')) %>% 
-  select(-gly.target.ppb,-imi.target.ppb,-water) %>%
-  mutate(nut = as.numeric(factor(nut, levels=c('low','high')))) %>%
-  select(date, site, gly:pond.id, NEP:SPC.mean, greens:total, BA, AWCD:Amines_amides, everything())
+##### format treatment variables for models ####
 
 #adding ordered factor for GAMs
-data$o.nut <- as.ordered(data$nut.fac)
-
+merged.data$o.nut <- as.ordered(merged.data$nut.fac)
 #rescaling pesticides gradients from 0 to 1 to compare effect with nutrient factor
-data$sc.gly <- rescale(data$gly, c(0,1))
-data$sc.imi <- rescale(data$imi, c(0,1))
-
+merged.data$sc.gly <- rescale(merged.data$gly, c(0,1))
+merged.data$sc.imi <- rescale(merged.data$imi, c(0,1))
 #adding site factor
-data$site.f <- as.factor(data$site)
-
+merged.data$site.f <- as.factor(merged.data$site)
 #adding date factor
-data$date.f <- as.factor(data$date)
-
+merged.data$date.f <- as.factor(merged.data$date)
 #reordering
-data <- select(data, date:pond.id,o.nut:date.f,everything())
+merged.data <- select(merged.data, date:pond.id,o.nut:date.f,everything())
 
 #### data exploration: correlations in the dataset ####
 
-corrgram(data, order=F, lower.panel=panel.shade,
+corrgram(merged.data, order=F, lower.panel=panel.shade,
          upper.panel=panel.pie, text.panel=panel.txt,
          main=NULL)
 
 #hard to see because of non-linear effects. Splitting by sampling date
 pdf('~/Desktop/corrgrams.pdf',height = 12,width = 12,onefile = T,pointsize = 8)
 for(d in Sampling.dates){
-  data.sub <- filter(data, date == d) %>% select(-date,-site)
+  data.sub <- filter(merged.data, date == d) %>% select(-(date:o.nut), -site.f, -date.f)
   data.sub <- data.sub[,apply(data.sub, 2, sd) != 0]
   corrgram(data.sub, order=F, lower.panel=panel.shade,
            upper.panel=panel.pie, text.panel=panel.txt,
@@ -153,108 +98,110 @@ for(d in Sampling.dates){
 }
 dev.off()
 
-
 #### finding the optimal gamm ####
 
 #all smooths + interactions
-ba.model <- gam(log10(BA) ~ o.nut + s(date,k=4) + s(sc.gly, k = 4) + s(sc.imi, k = 4) + ti(date,sc.gly, k=4) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=4) + ti(date,sc.imi, by = o.nut, k=4) + ti(date,sc.gly,sc.imi, k=4) + ti(date,sc.gly,sc.imi, by = o.nut, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=data, method = 'REML')
+ba.model <- gam(log10(BA) ~ o.nut + s(date,k=4) + s(sc.gly, k = 4) + s(sc.imi, k = 4) + ti(date,sc.gly, k=4) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=4) + ti(date,sc.imi, by = o.nut, k=4) + ti(date,sc.gly,sc.imi, k=4) + ti(date,sc.gly,sc.imi, by = o.nut, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=merged.data, method = 'REML')
 fit <- fitted(ba.model)
 summary(ba.model)
 gam.check(ba.model)
 
 #no 3 way interaction
-ba.model2 <- gam(log10(BA) ~ o.nut + s(date,k=4) + s(sc.gly, k = 4) + s(sc.imi, k = 4) + ti(date,sc.gly, k=4) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=4) + ti(date,sc.imi, by = o.nut, k=4) + ti(date,sc.gly,sc.imi, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=data, method = 'REML')
+ba.model2 <- gam(log10(BA) ~ o.nut + s(date,k=4) + s(sc.gly, k = 4) + s(sc.imi, k = 4) + ti(date,sc.gly, k=4) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=4) + ti(date,sc.imi, by = o.nut, k=4) + ti(date,sc.gly,sc.imi, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=merged.data, method = 'REML')
 fit2 <- fitted(ba.model2)
 summary(ba.model2)
 gam.check(ba.model2)
 plot(fit2~fit)
 
 #not eactly sure what the te() in this one does...
-ba.model3 <- gam(log10(BA) ~ nut.fac + te(date,sc.gly,sc.imi, by = nut.fac, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=data, method = 'REML')
+ba.model3 <- gam(log10(BA) ~ nut.fac + te(date,sc.gly,sc.imi, by = nut.fac, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=merged.data, method = 'REML')
 summary(ba.model3)
 gam.check(ba.model3)
 fit3 <- fitted(ba.model3)
 plot(fit3~fit)
 
 #no smooth for overall effect of pesticides, only interactions with time. Not sure this is appropriate
-ba.model4 <- gam(log10(BA) ~ o.nut + s(date,k=4) + ti(date,sc.gly, k=4) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=4) + ti(date,sc.imi, by = o.nut, k=4) + ti(date,sc.gly,sc.imi, k=4) + ti(date,sc.gly,sc.imi, by = o.nut, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=data, method = 'REML')
+ba.model4 <- gam(log10(BA) ~ o.nut + s(date,k=4) + ti(date,sc.gly, k=4) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=4) + ti(date,sc.imi, by = o.nut, k=4) + ti(date,sc.gly,sc.imi, k=4) + ti(date,sc.gly,sc.imi, by = o.nut, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=merged.data, method = 'REML')
 fit4 <- fitted(ba.model4)
 summary(ba.model4)
 gam.check(ba.model4)
 plot(fit4~fit)
 
 #te approach instead
-ba.model5 <- gam(log10(BA) ~ nut.fac + te(date,sc.gly, by = nut.fac, k=4) + te(date,sc.imi, by = nut.fac, k=4) + ti(date,sc.gly,sc.imi, by = nut.fac, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=data, method = 'REML')
+ba.model5 <- gam(log10(BA) ~ nut.fac + te(date,sc.gly, by = nut.fac, k=4) + te(date,sc.imi, by = nut.fac, k=4) + ti(date,sc.gly,sc.imi, by = nut.fac, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=merged.data, method = 'REML')
 fit5 <- fitted(ba.model5)
 summary(ba.model5)
 gam.check(ba.model5)
 plot(fit5~fit)
 
 #changing s to ti
-ba.model6 <- gam(log10(BA) ~ o.nut + ti(date,k=4) + ti(sc.gly, k = 4) + ti(sc.imi, k = 4) + ti(date,sc.gly, k=4) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=4) + ti(date,sc.imi, by = o.nut, k=4) + ti(date,sc.gly,sc.imi, k=4) + ti(date,sc.gly,sc.imi, by = o.nut, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=data, method = 'REML')
+ba.model6 <- gam(log10(BA) ~ o.nut + ti(date,k=4) + ti(sc.gly, k = 4) + ti(sc.imi, k = 4) + ti(date,sc.gly, k=4) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=4) + ti(date,sc.imi, by = o.nut, k=4) + ti(date,sc.gly,sc.imi, k=4) + ti(date,sc.gly,sc.imi, by = o.nut, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=merged.data, method = 'REML')
 summary(ba.model6)
 gam.check(ba.model6)
 plot(predict(ba.model6)~predict(ba.model))
 
 AIC(ba.model,ba.model2,ba.model3,ba.model4,ba.model5,ba.model6)
 
-#for talk
-vars <- c('total','BA','NEP','use','Glycogen')
-var.names <- c(expression(chlorophyll~italic(a)~(mu*g~L^-1)),
-               expression(bacterial~abundance~(cells~mu*l^-1)),
-               expression(NEP~(Delta*mg~DO~L^-1)),
-               expression(C~substrates~used),
-               expression(glycogen~respiration~(OD~units~above~blanks)))
-var.log <- c(T,T,F,F,F)
+##### Time series plot ####
 
-# #ecoplates exploratory analysis
-# vars <- names(data[13:52])
-# var.names <- names(data[13:52])
-# var.log <- rep(F,40)
+# vars <- c('total','BA','NEP','use','Glycogen')
+# var.names <- c(expression(chlorophyll~italic(a)~(mu*g~L^-1)),
+#                expression(bacterial~abundance~(cells~mu*L^-1)),
+#                expression(net~change~'in'~DO~(Delta*mg~DO~L^-1)),
+#                expression(C~substrates~used),
+#                expression(glycogen~respiration~(OD~units~above~blanks)))
+# var.log <- c(T,T,F,F,F)
 
-lwds <- seq(from = 1, to = 2.5, length.out = 8)
-ln.alpha <- seq(from = 0.6, to = 0.9, length.out = 8)
+vars <- c('BA','greens','NEP','use')
+var.names <- c(expression(bacterial~abundance~(cells~mu*L^-1)),
+               expression(chlorophyll~italic(a)~(mu*g~L^-1)),
+               expression(daytime~Delta*DO~(mg~L^-1)),
+               expression(C~substrates~used))
+var.log <- c(T,T,F,F)
 
-#pdf('~/Desktop/MSplots.pdf',width=8,height = 6,pointsize = 12,onefile = T)
-par(mfrow=c(3,2),mar=c(2,2,1,1),oma=c(2.5,2.5,1,1),cex=1)
+#pdf('~/Desktop/MSplots.pdf',width=9,height = 4.5,pointsize = 12,onefile = T)
+pdf('~/Desktop/MSplots.pdf',width=14,height = 10,pointsize = 12,onefile = T)
+par(mfrow=c(4,3),mar=c(2,2,1,1),oma=c(2.5,2.5,1,1),cex=1)
+#par(mfrow=c(2,3),mar=c(2,2,1,1),oma=c(2.5,2.5,1,1),cex=1)
+pchs.2 <- c(16,15)
+#pchs.2 <- c(16,15)
 
 for(v in 1:length(vars)){
   
-  tmp <- data[,c(colnames(data)[1:5],vars[v])]
-  
-  for(letter in c('C','D','E','H','J','K')){
+  tmp <- merged.data[,c(colnames(merged.data)[1:13],vars[v])]
+  #tmp$date.idx <- tmp$date
+  tmp$date.idx <- tmp$date - 0.6
+  tmp$date.idx[tmp$nut.num == 2] <- tmp$date[tmp$nut.num == 2] + 0.6
+  for(letter in c('C|D','E|H','J|K')){
+  #for(letter in c('C','E','K','D','H','J')){
     if(var.log[v] == T){
-      plotfunctions::emptyPlot(xlim=c(1,43),ylim=range(tmp[,6]),yaxt='n',xaxt='n',ann=F, bty='l', log = 'y')
+      plotfunctions::emptyPlot(xlim=c(1,43),ylim=range(tmp[,14]),yaxt='n',xaxt='n',ann=F, bty='l', log = 'y')
     }else{
-      plotfunctions::emptyPlot(xlim=c(1,43),ylim=range(tmp[,6]),yaxt='n',xaxt='n',ann=F, bty='l')
+      plotfunctions::emptyPlot(xlim=c(1,43),ylim=range(tmp[,14]),yaxt='n',xaxt='n',ann=F, bty='l')
     }
     axis(2,cex.axis=1,lwd=0,lwd.ticks=1)
     axis(1,cex.axis=1,lwd=0,lwd.ticks=1)
     tmp.sub <- filter(tmp, str_detect(site, letter))
-    if(letter %in% c('C','D')){
-      cols <- gly.cols
-    }else if(letter %in% c('E','H')){
-      cols <- imi.cols
-    }else{
-      cols <- both.cols
-    }
-    for(i in 1:8){
+    for(i in 1:16){
+    #for(i in 1:8){
       pond <- unique(tmp.sub$site)[i]
       sub.sub <- filter(tmp.sub, site == pond)
-      points(x=sub.sub$date,y=sub.sub[,6],type='l',lwd=lwds[i],col=alpha(cols[i],ln.alpha[i]))
+      points(x=sub.sub$date.idx,y=sub.sub[,14],type='o',lwd=1.2, pch=pchs.2[sub.sub$nut.num], col=alpha(allcols[sub.sub$pond.id],1))
     }
     abline(v=pulse.dates[1:2],lty=3)
+    if(letter == 'C|D'){mtext(var.names[v],side=2,line=3)}
   }
-  mtext('day of experiment',side=1,outer=T,line=1)
-  mtext(var.names[v],side=2,outer=T,line=1)
-  
+  #mtext(var.names[v],side=2,outer=T,line=1)
+  #mtext('day of experiment',side=1,outer=T,line=1)
 }
 
-#dev.off()
+mtext('day of experiment',side=1,outer=T,line=1)
 
-#for Jesse
+dev.off()
 
-ba <- select(data, date:imi, BA) %>% mutate_at(vars('site':'imi'), as.factor)
+#### for Jesse ####
+
+ba <- select(merged.data, date:imi, BA) %>% mutate_at(vars('site':'imi'), as.factor)
 hist(ba$BA) #gamma
 plot(BA~date,ba)
 library(lme4)
@@ -270,8 +217,6 @@ f1 <- update(f1, . ~ . + (1+date|site))
 # plot(m2) #bad
 
 library(brms)
-
-
 
 m3 <- brm(f1, ba, family=Gamma(link='log'), cores=4, iter = 10000)
 summary(m3)
@@ -289,8 +234,8 @@ marginal_effects(m3)
 
 #### Ecoplates ordination (in progress) ####
 
-#com2 <- select(data, date:imi,Polymers:Amines_amides)
-com2 <- select(data, date:imi,`Pyruvic acid methyl ester`:Putrescine)
+#com2 <- select(merged.data, date:imi,Polymers:Amines_amides)
+com2 <- select(merged.data, date:imi,`Pyruvic acid methyl ester`:Putrescine)
 com2$fill.alpha <- 0.1
 com2$fill.alpha[com2$date == 43] <- 0.8
 com2$pt.cex <- 1
