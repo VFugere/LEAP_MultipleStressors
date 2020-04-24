@@ -1,5 +1,6 @@
-## Code to analyze ecoplates data from LEAP 2016
-## Vincent Fugère, 2017-2019
+## Code to analyze LEAP 2016 MS data
+## Vincent Fugère 2017-2020
+## This is a data exploration script for the ecoplates data
 
 rm(list=ls())
 library(tidyverse)
@@ -18,51 +19,23 @@ devtools::source_url('https://raw.githubusercontent.com/VFugere/Rfuncs/master/ut
 
 #### basic data ####
 
-Sampling.dates <-c('17/08/16','23/08/16','31/08/16','15/09/16','20/09/16','28/09/16')
-Sampling.dates <- as.Date(Sampling.dates, format = '%d/%m/%y')
-Sampling.dates <- format(Sampling.dates, '%j')
-Sampling.dates <- as.numeric(Sampling.dates)
-Sampling.dates <- Sampling.dates - 229 #day 1 of exp is Julian day 230
+load('~/Google Drive/Recherche/LEAP Postdoc/2016/MSdata.RData')
 
-pulse.dates <- as.Date(c('22/08/2016','19/09/2016','30/09/2016'), format = '%d/%m/%Y')
-pulse.dates <- format(pulse.dates, '%j')
-pulse.dates <- as.numeric(pulse.dates) - 229
+pchs <- c(1,0)
 
-treat <- read.csv('/Users/vincentfugere/Google Drive/Recherche/LEAP Postdoc/2016/raw data/LEAP2016treatments.csv', stringsAsFactors = F)
-treat <- select(treat, pond, nut.f, gly.lvl, imi.lvl) %>%
-  rename('site' = pond,'nut' = nut.f, 'gly' = gly.lvl, 'imi' = imi.lvl)
+gly.cols <- c('gray90',brewer.pal(9, 'Reds')[2:8])
+imi.cols <- c('gray90',brewer.pal(9, 'Blues')[2:8])
+both.cols <- c('gray90',brewer.pal(9, 'Greens')[2:8])
 
-gly.cols <- brewer.pal(8, 'Reds')
-imi.cols <- brewer.pal(8, 'Blues')
-both.cols <- brewer.pal(8, 'Greens')
+glycolfunc <- colorRampPalette(gly.cols)
+imicolfunc <- colorRampPalette(imi.cols)
+bothcolfunc <- colorRampPalette(both.cols)
 
-#### flow cytometry data ####
-
-FC <- read_xlsx('/Users/vincentfugere/Google Drive/Recherche/LEAP Postdoc/2016/raw data/bacterial_counts.xlsx')
-FC[FC$pond == 'F1','pond'] <- 'H3'
-FC <- select(FC, day, pond, mean.cells.ul) %>% 
-  filter(!is.na(mean.cells.ul)) %>%
-  mutate('day' = as.numeric(day)) %>% 
-  rename('date' = day, 'site' = pond, 'BA' = mean.cells.ul) %>%
-  filter(date %in% Sampling.dates) %>% arrange(date,site)
-
-#### ecoplates data ####
-
-EP <- read_xlsx('/Users/vincentfugere/Google Drive/Recherche/LEAP Postdoc/2016/raw data/Ecoplates/Ecoplates_clean.xlsx', sheet = 'by_substrate')
-EP2 <- read_xlsx('/Users/vincentfugere/Google Drive/Recherche/LEAP Postdoc/2016/raw data/Ecoplates/Ecoplates_clean.xlsx', sheet = 'by_guild') %>% select(date:Amines_amides)
-EP <- left_join(EP, EP2, by = c('date','site')) %>%
-  filter(date %in% Sampling.dates) %>% arrange(date,site)
-rm(EP2)
-
-#### bind and clean ####
-
-data <- inner_join(FC,EP, by = c('date','site')) %>%
-  left_join(treat, by = c('site')) %>% 
-  select(date, site, nut:imi, everything())
+allcols <- c(gly.cols,gly.cols,imi.cols,imi.cols,both.cols,both.cols)
 
 #### plots ####
 
-corrgram(data[,c(1,6:46)], order=TRUE, lower.panel=panel.shade,
+corrgram(merged.data[,c(1,6:46)], order=TRUE, lower.panel=panel.shade,
          upper.panel=panel.pie, text.panel=panel.txt,
          main=NULL)
 
@@ -81,7 +54,7 @@ par(mfrow=c(3,2),mar=c(2,2,1,1),oma=c(2.5,2.5,1,1),cex=1)
 
 for(v in 1:length(vars)){
   
-  tmp <- data[,c(colnames(data)[1:5],vars[v])]
+  tmp <- merged.data[,c(colnames(merged.data)[1:5],vars[v])]
   
   for(letter in c('C','D','E','H','J','K')){
     if(var.log[v] == T){
@@ -113,10 +86,43 @@ for(v in 1:length(vars)){
 
 dev.off()
 
+#### for Jesse ####
+
+ba <- select(merged.data, date:imi, BA) %>% mutate_at(vars('site':'imi'), as.factor)
+hist(ba$BA) #gamma
+plot(BA~date,ba)
+library(lme4)
+f1 <- formula(BA ~ date+gly+imi+nut)
+f1 <- update(f1, . ~ . + .:date)
+f1 <- update(f1, . ~ . + (1+date|site))
+# m1 <- glmer(f1, ba, family=Gamma(link='log'))
+# plot(m1)
+# anova(m1)
+# f2 <- update(f1, log(BA) ~ .)
+# m2 <- lmer(f1, ba)
+# summary(m2)
+# plot(m2) #bad
+
+library(brms)
+
+m3 <- brm(f1, ba, family=Gamma(link='log'), cores=4, iter = 10000)
+summary(m3)
+plot(m3)
+pp_check(m3)
+marginal_effects(m3)
+m3 -> m.fact
+
+ba <- ba %>% mutate_at(vars('gly','imi'), as.numeric)
+m3 <- brm(f1, ba, family=Gamma(link='log'), cores=8, iter = 10000)
+summary(m3)
+plot(m3)
+pp_check(m3)
+marginal_effects(m3)
+
 #### Ecoplates ordination (in progress) ####
 
-#com2 <- select(data, date:imi,Polymers:Amines_amides)
-com2 <- select(data, date:imi,`Pyruvic acid methyl ester`:Putrescine)
+#com2 <- select(merged.data, date:imi,Polymers:Amines_amides)
+com2 <- select(merged.data, date:imi,`Pyruvic acid methyl ester`:Putrescine)
 com2$fill.alpha <- 0.1
 com2$fill.alpha[com2$date == 43] <- 0.8
 com2$pt.cex <- 1
@@ -131,6 +137,7 @@ spe <- spe-min(spe)+0.01
 spe <- log1p(spe)
 row.names(spe) <- com2$site
 
+library(vegan)
 ordi <- metaMDS(spe, distance = 'bray', k = 2, autotransform = FALSE, trymax = 1000)
 
 pdf('~/Desktop/ordi.pdf',height = 5,width = 6,pointsize = 12)
@@ -155,7 +162,6 @@ for(i in 1:nlevels(com2$site)){
 stress.val <- round(ordi$stress,2)
 legend('topright',bty='n',legend='Stress = 0.11')
 dev.off()
-
 
 
 # OLD AND USELESS
