@@ -6,7 +6,6 @@ rm(list=ls())
 library(tidyverse)
 library(skimr)
 library(magrittr)
-library(readxl)
 
 library(scales)
 library(shape)
@@ -22,41 +21,28 @@ library(sjlabelled)
 library(sjmisc)
 library(mgcv)
 library(itsadug)
+library(mgcViz)
 
 devtools::source_url('https://raw.githubusercontent.com/VFugere/Rfuncs/master/vif.R')
 devtools::source_url('https://raw.githubusercontent.com/VFugere/Rfuncs/master/utils.R')
 
-#### basic data
+#### load data ####
 
-Sampling.dates <-c('17/08/16','23/08/16','31/08/16','15/09/16','20/09/16','28/09/16')
-Sampling.dates <- as.Date(Sampling.dates, format = '%d/%m/%y')
-Sampling.dates <- format(Sampling.dates, '%j')
-Sampling.dates <- as.numeric(Sampling.dates)
-Sampling.dates <- Sampling.dates - 229 #day 1 of exp is Julian day 230
+load('~/Google Drive/Recherche/LEAP Postdoc/2016/MSdata.RData')
 
-pulse.dates <- as.Date(c('22/08/2016','19/09/2016','30/09/2016'), format = '%d/%m/%Y')
-pulse.dates <- format(pulse.dates, '%j')
-pulse.dates <- as.numeric(pulse.dates) - 229
+#### colour palette & plotting parameters ####
 
-treat <- read.csv('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/LEAP2016treatments.csv', stringsAsFactors = F) %>%
-  rename('site' = pond,'nut' = nut.f, 'gly' = gly.lvl, 'imi' = imi.lvl, 'gly.target.ppb' = gly.conc, 'imi.target.ppb' = imi.conc) %>%
-  select(-nut.ug.P,-nut.rel,-array,-nb)
-treat$nut.fac <- factor(treat$nut, levels = c('low','high'))
-treat$nut.num <- as.numeric(treat$nut.fac)
-treat$pond.id <- 1:48
+pchs <- c(1,0)
 
-#three.cols <- c('#058A51','#130CA6','#EB0C00')
-#library(wesanderson)
-#three.cols <- wes_palette('Zissou1',5)[c(3,1,5)]
-three.cols <- brewer.pal(3,'Dark2')[c(2,3,1)]
-glycolfunc <- colorRampPalette(c("gray80", three.cols[1]))
-gly.cols <- glycolfunc(8)
-imicolfunc <- colorRampPalette(c("gray80", three.cols[2]))
-imi.cols <- imicolfunc(8)
-bothcolfunc <- colorRampPalette(c("gray80", three.cols[3]))
-both.cols <- bothcolfunc(8)
+gly.cols <- c('gray90',brewer.pal(9, 'Reds')[2:8])
+imi.cols <- c('gray90',brewer.pal(9, 'Blues')[2:8])
+both.cols <- c('gray90',brewer.pal(9, 'Greens')[2:8])
+
+glycolfunc <- colorRampPalette(gly.cols)
+imicolfunc <- colorRampPalette(imi.cols)
+bothcolfunc <- colorRampPalette(both.cols)
+
 allcols <- c(gly.cols,gly.cols,imi.cols,imi.cols,both.cols,both.cols)
-pchs <- c(16,15)
 
 #### Figure panel: experimental design ####
 
@@ -88,19 +74,7 @@ text(x=0.5,y=0.3,pos=4,labels=make.italic('top number = glyphosate (ppm), bottom
 
 dev.off()
 
-#### nutrient and pesticide data ####
-
-nut <- read_xlsx('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/2016nutrients.xlsx') %>%
-  group_by(site,time.point,var) %>% summarize(day = mean(day), conc = mean(conc.ug.per.L, na.rm=T)) %>%
-  ungroup %>% filter(var != 'SRP', time.point != 4) %>% select(-time.point) %>% spread(var,conc) %>% rename(date = day)
-
-gly <- read_xlsx('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/Contaminants/gly_clean.xlsx') %>% select(-time.point, -gly.expected.ppb, -gly.max.ppb)
-gly$date <- gly$date %>% as.Date(format = '%d.%m.%Y') %>% format('%j') %>% as.numeric
-gly$date <- gly$date - 229
-
-imi <- read_xlsx('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/Contaminants/imi_clean.xlsx') %>% select(-time.point, -notes)
-imi$date <- imi$date %>% as.Date(format = '%d.%m.%Y') %>% format('%j') %>% as.numeric
-imi$date <- imi$date - 229
+#### format nutrient and pesticide data ####
 
 nut <- left_join(nut, treat)
 
@@ -280,167 +254,189 @@ legend('topleft',bty='n',legend='dose 2',cex=0.95)
 
 dev.off()
 
-#### YSI & metab data ####
-
-YSI <- read.csv('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/YSI_exp.csv',header=T,stringsAsFactors=F)
-YSI$date <- sapply(strsplit(YSI$time, '[ ]'), function(x) x[1])
-YSI$time <- sapply(strsplit(YSI$time, '[ ]'), function(x) x[2])
-YSI[YSI$pond == 'F1','pond'] <- 'H3'
-names(YSI)[7] <- 'site' #to be consistent with other data frames
-YSI$date <- as.Date(YSI$date, format = '%d/%m/%Y')
-YSI$date <- format(YSI$date, '%j')
-YSI$date <- as.numeric(YSI$date)
-YSI$date <- YSI$date - 229 #day 1 of exp is Julian day 230
-YSI <- YSI[YSI$date < 45,]
-# adding NEP
-YSI$period <- as.factor(YSI$period)
-YSI$TP <- as.factor(YSI$date)
-YSI <- YSI %>% group_by(TP, site) %>%
-  mutate(NEP = DO.mg.L[2] - DO.mg.L[1], pH.diff = pH[2] - pH[1], pH.mean = mean(pH[1],pH[2]), temp.mean = mean(temp.C[1],temp.C[2]), DO.mean = mean(DO.mg.L[1],DO.mg.L[2]), SPC.mean = mean(SPC.uS.cm[1],SPC.uS.cm[2])) %>%
-  ungroup
-YSI <- YSI[YSI$period != 'dusk',]
-#correcting for offset in 5th time point due to calibration problems.
-YSI$NEP[YSI$date == 35] <- YSI$NEP[YSI$date == 35] - 1
-YSI <- YSI %>% select(date,site,NEP:SPC.mean)
-
-#### fluoroprobe data ####
-
-FP <- read.csv('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/fluoroprobe.csv',header=T,stringsAsFactors=F) %>% select(-X) %>% as.data.frame
-FP$date <- as.Date(FP$date, format = '%d/%m/%Y')
-FP$date <- format(FP$date, '%j')
-FP$date <- as.numeric(FP$date)
-FP$date <- FP$date - 229 #day 1 of exp is Julian day 230
-FP[FP$site == 'F1','site'] <- 'H3'
-FP <- filter(FP, site %!in% c('LAKE','WELL'))
-FP[FP$date == 2,'date'] <- 1
-FP[FP$date == 8,'date'] <- 7
-FP <- FP[order(FP$date),]
-FP <- select(FP, date,site,greens:cryptos,total) %>%
-  filter(date %in% Sampling.dates)
-
-#### flow cytometry data ####
-
-FC <- read_xlsx('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/bacterial_counts.xlsx')
-FC[FC$pond == 'F1','pond'] <- 'H3'
-FC <- select(FC, day, pond, mean.cells.ul) %>% 
-  filter(!is.na(mean.cells.ul)) %>%
-  mutate('day' = as.numeric(day)) %>% 
-  rename('date' = day, 'site' = pond, 'BA' = mean.cells.ul) %>%
-  filter(date %in% Sampling.dates) %>% arrange(date,site)
-
-#### ecoplates data ####
-
-EP <- read_xlsx('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/Ecoplates/Ecoplates_clean.xlsx', sheet = 'by_substrate')
-EP2 <- read_xlsx('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/Ecoplates/Ecoplates_clean.xlsx', sheet = 'by_guild') %>% select(date:Amines_amides)
-EP <- left_join(EP, EP2, by = c('date','site')) %>%
-  filter(date %in% Sampling.dates) %>% arrange(date,site)
-rm(EP2)
-
-#### bind and clean ####
-
-data <- inner_join(FP,YSI, by = c('date','site')) %>%
-  inner_join(FC, by = c('date','site')) %>%
-  inner_join(EP, by = c('date','site')) %>%
-  left_join(treat, by = c('site')) %>% 
-  select(-gly.target.ppb,-imi.target.ppb,-water) %>%
-  mutate(nut = as.numeric(factor(nut, levels=c('low','high')))) %>%
-  select(date, site, gly:pond.id, NEP:SPC.mean, greens:total, BA, AWCD:Amines_amides, everything())
+##### format treatment variables for models ####
 
 #adding ordered factor for GAMs
-data$o.nut <- as.ordered(data$nut.fac)
-
+merged.data$o.nut <- as.ordered(merged.data$nut.fac)
 #rescaling pesticides gradients from 0 to 1 to compare effect with nutrient factor
-data$sc.gly <- rescale(data$gly, c(0,1))
-data$sc.imi <- rescale(data$imi, c(0,1))
-
+merged.data$sc.gly <- rescale(merged.data$gly, c(0,1))
+merged.data$sc.imi <- rescale(merged.data$imi, c(0,1))
 #adding site factor
-data$site.f <- as.factor(data$site)
-
+merged.data$site.f <- as.factor(merged.data$site)
 #adding date factor
-data$date.f <- as.factor(data$date)
-
+merged.data$date.f <- as.factor(merged.data$date)
 #reordering
-data <- select(data, date:pond.id,o.nut:date.f,everything())
+merged.data <- select(merged.data, date:pond.id,o.nut:date.f,everything())
 
 #### GAMMs ####
 
-ba.model <- gam(log10(BA) ~ o.nut + ti(date,k=4) + ti(sc.gly, k = 4) + ti(sc.imi, k = 4) + ti(date,sc.gly, k=4) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=4) + ti(date,sc.imi, by = o.nut, k=4) + ti(date,sc.gly,sc.imi, k=4) + ti(date,sc.gly,sc.imi, by = o.nut, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=data, method = 'REML')
+ba.model <- gam(log10(BA) ~ o.nut + ti(date,k=4) + ti(sc.gly, k = 4) + ti(sc.imi, k = 4) + ti(date,sc.gly, k=4) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=4) + ti(date,sc.imi, by = o.nut, k=4) + ti(date,sc.gly,sc.imi, k=4) + ti(date,sc.gly,sc.imi, by = o.nut, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=merged.data, method = 'REML')
 gam.check(ba.model)
 summary(ba.model)
 
-fitted <- as.data.frame(predict(ba.model, se.fit = T,exclude='s(date,site)'))
-fitted$lwr <- fitted$fit - 1.96*fitted$se.fit
-fitted$upr <- fitted$fit + 1.96*fitted$se.fit
-ylims <- range(c(fitted$lwr,fitted$upr))
-ylims <- range(fitted$fit)
+chla.model <- gam(log10(total) ~ o.nut + ti(date,k=4) + ti(sc.gly, k = 4) + ti(sc.imi, k = 4) + ti(date,sc.gly, k=4) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=4) + ti(date,sc.imi, by = o.nut, k=4) + ti(date,sc.gly,sc.imi, k=4) + ti(date,sc.gly,sc.imi, by = o.nut, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=merged.data, method = 'REML')
+gam.check(chla.model)
+summary(chla.model)
 
-###### a simple visualization ####
+nep.model <- gam(log10p(NEP) ~ o.nut + ti(date,k=4) + ti(sc.gly, k = 4) + ti(sc.imi, k = 4) + ti(date,sc.gly, k=4) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=4) + ti(date,sc.imi, by = o.nut, k=4) + ti(date,sc.gly,sc.imi, k=4) + ti(date,sc.gly,sc.imi, by = o.nut, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=merged.data, method = 'REML')
+gam.check(nep.model)
+summary(nep.model)
 
-pdf('~/Desktop/gamms.pdf',width=12,height=4,pointsize = 12)
+cup.model <- gam(use ~ o.nut + ti(date,k=4) + ti(sc.gly, k = 4) + ti(sc.imi, k = 4) + ti(date,sc.gly, k=4) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=4) + ti(date,sc.imi, by = o.nut, k=4) + ti(date,sc.gly,sc.imi, k=4) + ti(date,sc.gly,sc.imi, by = o.nut, k=4) + s(date, site.f, bs='fs',k=3, m=2), data=merged.data, method = 'REML', family='nb')
+gam.check(cup.model)
+summary(cup.model)
+plot(cup.model)
 
-par(mfrow=c(1,6),mar=c(2,2,2,2),oma=c(2,2,0,0),cex=1)
-plot_smooth(ba.model, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=gly.cols[1],print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims)
-plot_smooth(ba.model, view="date", cond=list('sc.gly'=0.5,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=gly.cols[5],add=T,print.summary = F)
-plot_smooth(ba.model, view="date", cond=list('sc.gly'=1,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=gly.cols[8],add=T,print.summary = F)
-plot_smooth(ba.model, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=imi.cols[1],print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims)
-plot_smooth(ba.model, view="date", cond=list('sc.gly'=0,'sc.imi'=0.5,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=imi.cols[5],add=T,print.summary = F)
-plot_smooth(ba.model, view="date", cond=list('sc.gly'=0,'sc.imi'=1,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=imi.cols[8],add=T,print.summary = F)
-plot_smooth(ba.model, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=both.cols[1],print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims)
-plot_smooth(ba.model, view="date", cond=list('sc.gly'=0.5,'sc.imi'=0.5,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=both.cols[5],add=T,print.summary = F)
-plot_smooth(ba.model, view="date", cond=list('sc.gly'=1,'sc.imi'=1,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=both.cols[8],add=T,print.summary = F)
-plot_smooth(ba.model, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=gly.cols[1],print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims)
-plot_smooth(ba.model, view="date", cond=list('sc.gly'=0.5,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=gly.cols[5],add=T,print.summary = F)
-plot_smooth(ba.model, view="date", cond=list('sc.gly'=1,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=gly.cols[8],add=T,print.summary = F)
-plot_smooth(ba.model, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=imi.cols[1],print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims)
-plot_smooth(ba.model, view="date", cond=list('sc.gly'=0,'sc.imi'=0.5,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=imi.cols[5],add=T,print.summary = F)
-plot_smooth(ba.model, view="date", cond=list('sc.gly'=0,'sc.imi'=1,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=imi.cols[8],add=T,print.summary = F)
-plot_smooth(ba.model, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=both.cols[1],print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims)
-plot_smooth(ba.model, view="date", cond=list('sc.gly'=0.5,'sc.imi'=0.5,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=both.cols[5],add=T,print.summary = F)
-plot_smooth(ba.model, view="date", cond=list('sc.gly'=1,'sc.imi'=1,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=both.cols[8],add=T,print.summary = F)
+ba.model <- gam(log10(BA) ~ o.nut + ti(date) + ti(sc.gly) + ti(sc.imi) + ti(date,sc.gly) + ti(date,sc.gly, by = o.nut) + ti(date,sc.imi) + ti(date,sc.imi, by = o.nut) + ti(date,sc.gly,sc.imi) + ti(date,sc.gly,sc.imi, by = o.nut) + s(site.f, bs='re'), data=merged.data, method = 'REML')
+gam.check(ba.model)
+summary(ba.model)
+
+chla.model <- gam(log10(total) ~ o.nut + ti(date,k=5) + ti(sc.gly, k = 5) + ti(sc.imi, k = 5) + ti(date,sc.gly, k=5) + ti(date,sc.gly, by = o.nut, k=5) + ti(date,sc.imi, k=5) + ti(date,sc.imi, by = o.nut, k=5) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=5) + s(site.f, bs='re'), data=merged.data, method = 'REML')
+gam.check(chla.model)
+summary(chla.model)
+
+ba.model <- gam(log10(BA) ~ o.nut + ti(date,k=5) + ti(sc.gly, k = 5) + ti(sc.imi, k = 5) + ti(date,sc.gly, k=5) + ti(date,sc.gly, by = o.nut, k=5) + ti(date,sc.imi, k=5) + ti(date,sc.imi, by = o.nut, k=5) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=5) + s(site.f, bs='re'), data=merged.data, method = 'REML')
+gam.check(ba.model)
+summary(ba.model)
+
+###### a simple visualization of gamms ####
+
+VF.gam.plot <- function(model.name, varname){
+  #fitted <- as.data.frame(predict(model.name, se.fit = T,exclude='s(date,site)'))
+  fitted <- as.data.frame(predict(model.name, se.fit = T,exclude='s(site.f)'))
+  fitted$lwr <- fitted$fit - 1.96*fitted$se.fit
+  fitted$upr <- fitted$fit + 1.96*fitted$se.fit
+  #ylims <- range(c(fitted$lwr,fitted$upr))
+  ylims <- range(fitted$fit)
+  gly.cols.plot <- glycolfunc(8)
+  imi.cols.plot <- imicolfunc(8)
+  both.cols.plot <- bothcolfunc(8)
+  vals <- seq(0,1,length.out=8)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=gly.cols.plot[1],print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims,se=0)
+  for(i in 2:8){plot_smooth(model.name, view="date", cond=list('sc.gly'=vals[i],'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=gly.cols.plot[i],add=T,print.summary = F,se=0)}
+  legend('topleft',legend='LN',bty='n')
+  mtext(varname,2,line=2.5)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=gly.cols.plot[1],print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims,se=0)
+  for(i in 2:8){plot_smooth(model.name, view="date", cond=list('sc.gly'=vals[i],'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=gly.cols.plot[i],add=T,print.summary = F,se=0)}
+  legend('topleft',legend='HN',bty='n')
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=imi.cols.plot[1],print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims,se=0)
+  for(i in 2:8){plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=vals[i],'o.nut'='low'), rm.ranef=TRUE, rug=F,col=imi.cols.plot[i],add=T,print.summary = F,se=0)}
+  legend('topleft',legend='LN',bty='n')
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=imi.cols.plot[1],print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims,se=0)
+  for(i in 2:8){plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=vals[i],'o.nut'='high'), rm.ranef=TRUE, rug=F,col=imi.cols.plot[i],add=T,print.summary = F,se=0)}
+  legend('topleft',legend='HN',bty='n')
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=both.cols.plot[1],print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims,se=0)
+  for(i in 2:8){plot_smooth(model.name, view="date", cond=list('sc.gly'=vals[i],'sc.imi'=vals[i],'o.nut'='low'), rm.ranef=TRUE, rug=F,col=both.cols.plot[i],add=T,print.summary = F,se=0)}
+  legend('topleft',legend='LN',bty='n')
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=both.cols.plot[1],print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims,se=0)
+  for(i in 2:8){plot_smooth(model.name, view="date", cond=list('sc.gly'=vals[i],'sc.imi'=vals[i],'o.nut'='high'), rm.ranef=TRUE, rug=F,col=both.cols.plot[i],add=T,print.summary = F,se=0)}
+  legend('topleft',legend='HN',bty='n')
+}
+
+pdf('~/Desktop/gamms.pdf',width=15,height=10,pointsize = 12)
+par(mfrow=c(3,6),mar=c(2,2,2,2),oma=c(2,2,0,0),cex=1)
+VF.gam.plot(model.name=ba.model, varname=expression(log[10]~bacterial~abundance~(cells/mu*L)))
+VF.gam.plot(model.name=chla.model, varname=expression(log[10]~chlorophyll~italic(a)~(mu*g/L)))
 mtext('date',1,outer=T,line=0.5)
-mtext(expression(log[10]~bacterial~abundance~(cells/mu*L)),2,outer=T,line=0.5)
-
 dev.off()
-#### contour plots####
 
-zlims <- range(fitted(ba.model))
+#### contour plots ####
 
 pdf('~/Desktop/contourplots.pdf',width=12,height=4,pointsize = 12)
 
-par(mfrow=c(2,6),mar=c(2,2,2,2),oma=c(2,2,0,0),cex=1)
-fvisgam(ba.model, view = c('sc.gly','sc.imi'), cond = list('date' = 1, 'o.nut' = 'low'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = magma(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
-mtext('LN day 1',3,cex=1)
-fvisgam(ba.model, view = c('sc.gly','sc.imi'), cond = list('date' = 7, 'o.nut' = 'low'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = magma(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
-mtext('LN day 7',3,cex=1)
-fvisgam(ba.model, view = c('sc.gly','sc.imi'), cond = list('date' = 15, 'o.nut' = 'low'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = magma(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
-mtext('LN day 15',3,cex=1)
-fvisgam(ba.model, view = c('sc.gly','sc.imi'), cond = list('date' = 30, 'o.nut' = 'low'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = magma(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
-mtext('LN day 30',3,cex=1)
-fvisgam(ba.model, view = c('sc.gly','sc.imi'), cond = list('date' = 35, 'o.nut' = 'low'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = magma(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
-mtext('LN day 35',3,cex=1)
-fvisgam(ba.model, view = c('sc.gly','sc.imi'), cond = list('date' = 43, 'o.nut' = 'low'), zlim=zlims, add.color.legend=T,hide.label=T,plot.type = 'contour', lwd=1.5,color = magma(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
-mtext('LN day 43',3,cex=1)
-fvisgam(ba.model, view = c('sc.gly','sc.imi'), cond = list('date' = 1, 'o.nut' = 'high'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = magma(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
-mtext('HN day 1',3,cex=1)
-fvisgam(ba.model, view = c('sc.gly','sc.imi'), cond = list('date' = 7, 'o.nut' = 'high'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = magma(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
-mtext('HN day 7',3,cex=1)
-fvisgam(ba.model, view = c('sc.gly','sc.imi'), cond = list('date' = 15, 'o.nut' = 'high'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = magma(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
-mtext('HN day 15',3,cex=1)
-fvisgam(ba.model, view = c('sc.gly','sc.imi'), cond = list('date' = 30, 'o.nut' = 'high'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = magma(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
-mtext('HN day 30',3,cex=1)
-fvisgam(ba.model, view = c('sc.gly','sc.imi'), cond = list('date' = 35, 'o.nut' = 'high'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = magma(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
-mtext('HN day 35',3,cex=1)
-fvisgam(ba.model, view = c('sc.gly','sc.imi'), cond = list('date' = 43, 'o.nut' = 'high'), zlim=zlims, add.color.legend=T,hide.label=T,plot.type = 'contour', lwd=1.5,color = magma(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
-mtext('HN day 43',3,cex=1)
+par(mfrow=c(2,6),mar=c(0.1,0.1,0.1,0.1),oma=c(2,2,2,2),cex=1,xpd=NA)
+zlims <- range(fitted(chla.model))
+for(nut.lvl in c('low','high')){
+  for(date.x in Sampling.dates){
+    fvisgam(chla.model, view = c('sc.gly','sc.imi'), too.far=0.28,cond = list('date' = date.x, 'o.nut' = nut.lvl), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = viridis(100), main = NULL,rm.ranef = T,dec=1,print.summary = F,yaxt='n',xaxt='n')
+    if(nut.lvl == 'low'){legend('top',bty='n',legend = paste('day',date.x,' '),cex=1,inset=-0.2)}
+    if(date.x == 43){legend('right',bty='n',legend = paste(nut.lvl,'nutrient',sep=' '),cex=1,inset=-0.2)}
+    }
+}
 mtext('glyphosate',1,outer=T,line=0.5)
 mtext('imidacloprid',2,outer=T,line=0.5)
+
 dev.off()
 
-#### linear model####
+#####
 
-ba.mod.lin <- lmer(log10(BA) ~ date.f + nut.fac + date.f:nut.fac + date.f:sc.gly + date.f:sc.imi + date.f:sc.gly:sc.imi + date.f:sc.gly:nut.fac +
-                     date.f:sc.imi:nut.fac + date.f:sc.gly:sc.imi:nut.fac + (1|site.f),data)
-ba.mod.lin <- lmer(log10(BA) ~ o.nut + date.f:o.nut + date.f:sc.gly + date.f:sc.imi + date.f:sc.gly:sc.imi + date.f:sc.gly:o.nut +
-                     date.f:sc.imi:o.nut + date.f:sc.gly:sc.imi:o.nut + (1|site.f),data)
-plot_model(ba.mod.lin)
+pvisgam(ba.model)
+
+
+#chla
+
+zlims <- range(fitted(chla.model))
+
+fvisgam(chla.model, view = c('sc.gly','sc.imi'), cond = list('date' = 1, 'o.nut' = 'low'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = magma(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
+mtext('LN day 1',3,cex=1)
+fvisgam(chla.model, view = c('sc.gly','sc.imi'), cond = list('date' = 7, 'o.nut' = 'low'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = magma(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
+mtext('LN day 7',3,cex=1)
+fvisgam(chla.model, view = c('sc.gly','sc.imi'), cond = list('date' = 15, 'o.nut' = 'low'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = magma(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
+mtext('LN day 15',3,cex=1)
+fvisgam(chla.model, view = c('sc.gly','sc.imi'), cond = list('date' = 30, 'o.nut' = 'low'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = magma(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
+mtext('LN day 30',3,cex=1)
+fvisgam(chla.model, view = c('sc.gly','sc.imi'), cond = list('date' = 35, 'o.nut' = 'low'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = magma(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
+mtext('LN day 35',3,cex=1)
+fvisgam(chla.model, view = c('sc.gly','sc.imi'), cond = list('date' = 43, 'o.nut' = 'low'), zlim=zlims, add.color.legend=T,hide.label=T,plot.type = 'contour', lwd=1.5,color = magma(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
+mtext('LN day 43',3,cex=1)
+fvisgam(chla.model, view = c('sc.gly','sc.imi'), cond = list('date' = 1, 'o.nut' = 'high'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = magma(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
+mtext('HN day 1',3,cex=1)
+fvisgam(chla.model, view = c('sc.gly','sc.imi'), cond = list('date' = 7, 'o.nut' = 'high'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = magma(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
+mtext('HN day 7',3,cex=1)
+fvisgam(chla.model, view = c('sc.gly','sc.imi'), cond = list('date' = 15, 'o.nut' = 'high'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = magma(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
+mtext('HN day 15',3,cex=1)
+fvisgam(chla.model, view = c('sc.gly','sc.imi'), cond = list('date' = 30, 'o.nut' = 'high'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = magma(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
+mtext('HN day 30',3,cex=1)
+fvisgam(chla.model, view = c('sc.gly','sc.imi'), cond = list('date' = 35, 'o.nut' = 'high'), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = magma(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
+mtext('HN day 35',3,cex=1)
+fvisgam(chla.model, view = c('sc.gly','sc.imi'), cond = list('date' = 43, 'o.nut' = 'high'), zlim=zlims, add.color.legend=T,hide.label=T,plot.type = 'contour', lwd=1.5,color = magma(100), main = NULL,rm.ranef = T,dec=1,print.summary = F)
+mtext('HN day 43',3,cex=1)
+
+mtext('glyphosate',1,outer=T,line=0.5)
+mtext('imidacloprid',2,outer=T,line=0.5)
+
+dev.off()
+
+##### trying out mgcViz package ####
+
+
+
+#### linear model ####
+
+ba.mod.lin <- lmer(log10(BA) ~ date.f + nut.fac:date.f + date.f:sc.gly + date.f:sc.imi + date.f:sc.gly:sc.imi + date.f:sc.gly:nut.fac +
+                     date.f:sc.imi:nut.fac + date.f:sc.gly:sc.imi:nut.fac + (1|site.f),merged.data)
+
+plot_model(ba.mod.lin,type='est')
+plot_model(ba.mod.lin,type='re')
+plot_model(ba.mod.lin,type='diag')
 performance(ba.mod.lin)
+plot(fitted(ba.mod.lin)~log10(merged.data$BA))
+ba.coefs <- get_model_data(ba.mod.lin, type = 'est')
+
+chla.mod.lin <- lmer(log10(total) ~ date.f + nut.fac:date.f + date.f:sc.gly + date.f:sc.imi + date.f:sc.gly:sc.imi + date.f:sc.gly:nut.fac +
+                     date.f:sc.imi:nut.fac + date.f:sc.gly:sc.imi:nut.fac + (1|site.f),merged.data)
+
+plot_model(chla.mod.lin,type='est')
+plot_model(chla.mod.lin,type='re')
+plot_model(chla.mod.lin,type='diag')
+performance(chla.mod.lin)
+plot(fitted(chla.mod.lin)~log10(merged.data$BA))
+chla.coefs <- get_model_data(chla.mod.lin, type = 'est')
+
+EP.mod.lin <- lmer(use ~ date.f + nut.fac + date.f:sc.gly + date.f:sc.imi + date.f:sc.gly:sc.imi + date.f:sc.gly:nut.fac +
+                       date.f:sc.imi:nut.fac + date.f:sc.gly:sc.imi:nut.fac + (1|site.f),merged.data)
+
+plot_model(EP.mod.lin,type='est')
+plot_model(EP.mod.lin,type='re')
+plot_model(EP.mod.lin,type='diag')
+performance(EP.mod.lin)
+plot(fitted(EP.mod.lin)~merged.data$use);abline(a=0,b=1,lty=3)
+
+# coef plot
+
+plot_models(ba.mod.lin,chla.mod.lin,std.est = "std2")
+tab_model(ba.mod.lin,chla.mod.lin)
+
+par(mfrow=c(7,1),mar=c(2,4,1,1),oma=c(2,0,0,0),cex=1)
+
+emptyplot(xlim=c())
