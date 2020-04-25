@@ -1,4 +1,4 @@
-## Code to analyze LEAP 2016 MS data
+  ## Code to analyze LEAP 2016 MS data
 ## Vincent Fugère 2019-2020
 ## This is a raw/rough data exploration script:
 ## Older code for UQAM LEAP talk in April 2019
@@ -189,6 +189,8 @@ dev.off()
 
 #### data exploration: correlations in the dataset ####
 
+less.data <- plot.data %>% select(date:rot.richness)
+
 # corrgram(merged.data, order=F, lower.panel=panel.shade,
 #          upper.panel=panel.pie, text.panel=panel.txt,
 #          main=NULL)
@@ -196,7 +198,7 @@ dev.off()
 #hard to see because of non-linear effects. Splitting by sampling date
 pdf('~/Desktop/corrgrams.pdf',height = 12,width = 12,onefile = T,pointsize = 8)
 for(d in Sampling.dates){
-  data.sub <- filter(merged.data, date == d) %>% select(-(date:o.nut), -site.f, -date.f, -(evenness:rot.evenness))
+  data.sub <- filter(less.data, date == d) %>% select(-(date:o.nut), -site.f, -date.f)
   data.sub <- data.sub[,apply(data.sub, 2, sd) != 0]
   corrgram(data.sub, order=F, lower.panel=panel.shade,
            upper.panel=panel.pie, text.panel=panel.txt,
@@ -208,12 +210,15 @@ dev.off()
 
 library(party)
 
-tree.data <- select(plot.data, -site, -nut.fac, -nut.num, -pond.id, -(o.nut:date.f), -(evenness:rot.evenness))
+tree.data <- select(plot.data, -site, -nut, -nut.num, -pond.id, -(o.nut:date.f), -(evenness:rot.evenness))
 
 pdf('~/Desktop/reg_trees.pdf',width=8,height = 6,pointsize = 12,onefile = T)
 par(mfrow=c(1,1),mar=c(4,4,1,1),oma=c(0,0,0,0),cex=1)
 
-for(v in 1:length(vars)){
-  fit <- ctree(tree.data[,v] ~ ., data = tree.data, controls = ctree_control(minsplit = 1, testtype = 'MonteCarlo', maxdepth = 5))
-  plot(fit, inner_panel=node_inner(fit,pval = T), terminal_panel=node_boxplot(fit, width=0.4,fill='white',ylines=3,id=F))
+for(v in 5:ncol(tree.data)){
+  var <- colnames(tree.data)[v]
+  sub.dat <- tree.data %>% select(var, everything())
+  colnames(sub.dat)[1] <- 'response'
+  fit <- ctree(response ~ ., data = sub.dat, controls = ctree_control(testtype = 'MonteCarlo', maxdepth = 5))
+  plot(fit, inner_panel=node_inner(fit,pval = T), terminal_panel=node_boxplot(fit, width=0.4,fill='white',ylines=3,id=F),main=var)
 }
