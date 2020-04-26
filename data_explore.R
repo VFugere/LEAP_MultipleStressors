@@ -212,13 +212,30 @@ library(party)
 
 tree.data <- select(plot.data, -site, -nut, -nut.num, -pond.id, -(o.nut:date.f), -(evenness:rot.evenness))
 
-pdf('~/Desktop/reg_trees.pdf',width=8,height = 6,pointsize = 12,onefile = T)
+pdf('~/Desktop/reg_trees.pdf',width=12,height = 8,pointsize = 8,onefile = T)
 par(mfrow=c(1,1),mar=c(4,4,1,1),oma=c(0,0,0,0),cex=1)
 
 for(v in 5:ncol(tree.data)){
   var <- colnames(tree.data)[v]
   sub.dat <- tree.data %>% select(var, everything())
   colnames(sub.dat)[1] <- 'response'
-  fit <- ctree(response ~ ., data = sub.dat, controls = ctree_control(testtype = 'MonteCarlo', maxdepth = 5))
+  fit <- ctree(response ~ ., data = sub.dat, controls = ctree_control(testtype = 'MonteCarlo', maxdepth = 3))
   plot(fit, inner_panel=node_inner(fit,pval = T), terminal_panel=node_boxplot(fit, width=0.4,fill='white',ylines=3,id=F),main=var)
 }
+
+dev.off()
+
+sem.data <- select(tree.data, date:NEP, BA, use, greens, diatoms, total_crustacean_adult, total_nauplii, total_copepodites, total_rotifer)
+
+pdf('~/Desktop/reg_trees_sem.pdf',width=12,height = 8,pointsize = 8,onefile = T)
+par(mfrow=c(1,1),mar=c(4,4,1,1),oma=c(0,0,0,0),cex=1)
+
+for(v in 5:ncol(sem.data)){
+  var <- colnames(sem.data)[v]
+  sub.dat <- sem.data %>% select(var, everything())
+  colnames(sub.dat)[1] <- 'response'
+  fit <- ctree(response ~ ., data = sub.dat, controls = ctree_control(testtype = 'MonteCarlo', maxdepth = 3))
+  plot(fit, inner_panel=node_inner(fit,pval = T), terminal_panel=node_boxplot(fit, width=0.4,fill='white',ylines=3,id=F),main=var)
+}
+
+dev.off()
