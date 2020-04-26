@@ -239,3 +239,4 @@ for(v in 5:ncol(sem.data)){
 }
 
 dev.off()
+  
