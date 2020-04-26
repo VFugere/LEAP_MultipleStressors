@@ -161,8 +161,8 @@ dev.off()
 
 #### scatterplot arrays ####
 
-pdf('~/Desktop/scatterplots.pdf',width=12,height = 7,pointsize = 12,onefile = T)
-par(mfrow=c(3,6),mar=c(2,2,1,1),oma=c(2,2,2,0),cex=1)
+pdf('~/Desktop/scatterplots.pdf',width=5.5,height = 3,pointsize = 8,onefile = T)
+par(mfrow=c(3,6),mar=c(0.1,0.1,0.1,0.1),oma=c(4,4,2,0.5),cex=1,xpd=T)
 pchs.2 <- c(16,15)
 
 for(v in 1:length(vars)){
@@ -173,15 +173,23 @@ for(v in 1:length(vars)){
     for(date.x in Sampling.dates){
       sub <- tmp %>% filter(date == date.x, str_detect(site, letter))
       sub$pesticide <- as.numeric(str_remove(sub$site, letter))
-      plot(y=sub[,14],x=sub[,15],xlab=NULL,ylab=NULL,bty='o',type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=allcols[sub$pond.id])
-      sub.low <- filter(sub, nut==1)
-      lines(predict(loess(sub.low[,14]~sub.low[,15])), col=alpha(1,0.5), lwd=1.5,lty=1)
-      sub.high <- filter(sub, nut==2)
-      lines(predict(loess(sub.high[,14]~sub.high[,15])), col=alpha(1,0.5), lwd=1.5,lty=2)
+      if(date.x == 1 & letter == 'J|K'){
+        plot(y=sub[,14],x=sub[,15],xlab=NULL,ylab=NULL,bty='o',type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=allcols[sub$pond.id])
+      }else if(date.x == 1 & letter != 'J|K'){
+        plot(y=sub[,14],x=sub[,15],xlab=NULL,ylab=NULL,bty='o',type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=allcols[sub$pond.id],xaxt='n')
+      }else if(date.x != 1 & letter == 'J|K'){
+        plot(y=sub[,14],x=sub[,15],xlab=NULL,ylab=NULL,bty='o',type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=allcols[sub$pond.id],yaxt='n')
+      }else{
+        plot(y=sub[,14],x=sub[,15],xlab=NULL,ylab=NULL,bty='o',type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=allcols[sub$pond.id],yaxt='n',xaxt='n')
+      }
+      #   sub.low <- filter(sub, nut==1)
+    #   lines(predict(loess(sub.low[,14]~sub.low[,15])), col=alpha(1,0.5), lwd=1.5,lty=1)
+    #   sub.high <- filter(sub, nut==2)
+    #   lines(predict(loess(sub.high[,14]~sub.high[,15])), col=alpha(1,0.5), lwd=1.5,lty=2)
     }
   }
-  mtext(vars[v],side=2,outer=T,line=0.5,cex=1.2)
-  mtext('pesticide dose',side=1,outer=T,line=0.5,cex=1.2)
+  mtext(vars[v],side=2,outer=T,line=2.5,cex=1.2)
+  mtext('pesticide concentration',side=1,outer=T,line=2.5,cex=1.2)
   mtext(paste('day',Sampling.dates,' '),side=3,outer=T,line=0.1,at=seq(0.1,0.93,length.out = 6),adj=0.5)
 }
 
