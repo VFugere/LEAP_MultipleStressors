@@ -96,9 +96,9 @@ merged.data$RUE[55:56] <- 0
 #' 
 #' AIC(m4,chla.model) # model with random smooths is definitey better. All gam.check() calls suggest basis dimensions are ok
 
-ba.model <- gam(log10(BA) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
-chla.model <- gam(log10(total) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
-zoo.model <- gam(log10p(total_zoo) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+ba.m <- gam(log10(BA) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+chla.m <- gam(log10(total) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+zoo.m <- gam(log10p(total_zoo) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
 
 ## finding a good distribution for 'use' variable
 # 
@@ -116,6 +116,8 @@ nep.m <- gam(log10p(NEP) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date
 rue.m <- gam(log10(RUE) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, subset=is.finite(log(RUE)), method = 'REML')
 diatoms.m <- gam(log10p(diatoms) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
 prop.diatoms.m <- gam((diatoms/total) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML', family=betar)
+
+save(ba.m,chla.m,zoo.m,use.m,nep.m,rue.m,diatoms.m,prop.diatoms.m, file='~/Desktop/GAMMS.RData')
 
 ###### a simple visualization of gamms ####
 
@@ -149,9 +151,17 @@ VF.gam.plot <- function(model.name, varname){
 
 pdf('~/Desktop/gamms.pdf',width=15,height=10,pointsize = 12)
 par(mfrow=c(3,6),mar=c(2,2,2,2),oma=c(2,2,0,0),cex=1)
-VF.gam.plot(model.name=ba.model, varname=expression(log[10]~bacterial~abundance~(cells/mu*L)))
-VF.gam.plot(model.name=chla.model, varname=expression(log[10]~chlorophyll~italic(a)~(mu*g/L)))
-VF.gam.plot(model.name=zoo.model, varname=expression(log[10](1+zooplankton~biomass)~(mu*g/L)))
+VF.gam.plot(model.name=ba.m, varname=expression(log[10]~bacterial~abundance~(cells/mu*L)))
+VF.gam.plot(model.name=chla.m, varname=expression(log[10]~chlorophyll~italic(a)~(mu*g/L)))
+VF.gam.plot(model.name=zoo.m, varname=expression(log[10](1+zooplankton~biomass)~(mu*g/L)))
+mtext('date',1,outer=T,line=0.5)
+dev.off()
+
+pdf('~/Desktop/gamms_ef.pdf',width=15,height=10,pointsize = 12)
+par(mfrow=c(3,6),mar=c(2,2,2,2),oma=c(2,2,0,0),cex=1)
+VF.gam.plot(model.name=use.m, varname=expression(carbon~use~potential))
+VF.gam.plot(model.name=nep.m, varname=expression(log[10]~daytime~Delta*DO~(mu*g/L)))
+VF.gam.plot(model.name=rue.m, varname=expression(log[10]~RUE~(mu*g/mu*g)))
 mtext('date',1,outer=T,line=0.5)
 dev.off()
 
@@ -192,9 +202,17 @@ VF.gam.plot.simpler <- function(model.name, varname){
 
 pdf('~/Desktop/gamms_simpler.pdf',width=15,height=10,pointsize = 12)
 par(mfrow=c(3,6),mar=c(2,2,2,2),oma=c(2,2,0,0),cex=1)
-VF.gam.plot.simpler(model.name=ba.model, varname=expression(log[10]~bacterial~abundance~(cells/mu*L)))
-VF.gam.plot.simpler(model.name=chla.model, varname=expression(log[10]~chlorophyll~italic(a)~(mu*g/L)))
-VF.gam.plot.simpler(model.name=zoo.model, varname=expression(log[10](1+zooplankton~biomass)~(mu*g/L)))
+VF.gam.plot.simpler(model.name=ba.m, varname=expression(log[10]~bacterial~abundance~(cells/mu*L)))
+VF.gam.plot.simpler(model.name=chla.m, varname=expression(log[10]~chlorophyll~italic(a)~(mu*g/L)))
+VF.gam.plot.simpler(model.name=zoo.m, varname=expression(log[10](1+zooplankton~biomass)~(mu*g/L)))
+mtext('date',1,outer=T,line=0.5)
+dev.off()
+
+pdf('~/Desktop/gamms_simpler_ef.pdf',width=15,height=10,pointsize = 12)
+par(mfrow=c(3,6),mar=c(2,2,2,2),oma=c(2,2,0,0),cex=1)
+VF.gam.plot.simpler(model.name=use.m, varname=expression(carbon~use~potential))
+VF.gam.plot.simpler(model.name=nep.m, varname=expression(log[10]~daytime~Delta*DO~(mu*g/L)))
+VF.gam.plot.simpler(model.name=rue.m, varname=expression(log[10]~RUE~(mu*g/mu*g)))
 mtext('date',1,outer=T,line=0.5)
 dev.off()
 
@@ -220,9 +238,16 @@ VF.cont.plot <- function(model.name){
 
 pdf('~/Desktop/contourplots.pdf',width=7.5,height=3,pointsize = 12,onefile = T)
 par(mfrow=c(2,6),mar=c(0.1,0.1,0.1,0.1),oma=c(2,2,2,2),cex=1,xpd=T)
-VF.cont.plot(ba.model)
-VF.cont.plot(chla.model)
-VF.cont.plot(zoo.model)
+VF.cont.plot(ba.m)
+VF.cont.plot(chla.m)
+VF.cont.plot(zoo.m)
+dev.off()
+
+pdf('~/Desktop/contourplots_ef.pdf',width=7.5,height=3,pointsize = 12,onefile = T)
+par(mfrow=c(2,6),mar=c(0.1,0.1,0.1,0.1),oma=c(2,2,2,2),cex=1,xpd=T)
+VF.cont.plot(use.m)
+VF.cont.plot(nep.m)
+VF.cont.plot(rue.m)
 dev.off()
 
 #### other gamms:ef, diatoms ####
@@ -282,9 +307,16 @@ VF.3D.plot <- function(model.name,label){
 
 pdf('~/Desktop/3dplots.pdf',width=14,height=6,pointsize = 8,onefile = T)
 par(mfrow=c(2,6),mar=c(0,0,0,0),oma=c(2,2,2,2),cex=1,xpd=T)
-VF.3D.plot(ba.model,'BA')
-VF.3D.plot(chla.model,'chlorophyll')
-VF.3D.plot(zoo.model,'zoo biomass')
+VF.3D.plot(ba.m,'BA')
+VF.3D.plot(chla.m,'chlorophyll')
+VF.3D.plot(zoo.m,'zoo biomass')
+dev.off()
+
+pdf('~/Desktop/3dplots_ef.pdf',width=14,height=6,pointsize = 8,onefile = T)
+par(mfrow=c(2,6),mar=c(0,0,0,0),oma=c(2,2,2,2),cex=1,xpd=T)
+VF.3D.plot(use.m,'CUP')
+VF.3D.plot(nep.m,'NEP')
+VF.3D.plot(rue.m,'RUE')
 dev.off()
 
 ##### Linear models to quantify effect sizes#####
