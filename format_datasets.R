@@ -46,6 +46,11 @@ imi <- read_xlsx('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/Contaminan
 imi$date <- imi$date %>% as.Date(format = '%d.%m.%Y') %>% format('%j') %>% as.numeric
 imi$date <- imi$date - 229
 
+#### HOBO data (also not merged) ####
+
+hobodat <- read_xlsx('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/HOBO_temp_clean.xlsx') %>% 
+  select(time.num < 2065) #only keeping the first 43 days of the experiment, i.e. no phase 2
+
 #### YSI & metab data ####
 
 YSI <- read.csv('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/YSI_exp.csv',header=T,stringsAsFactors=F)
