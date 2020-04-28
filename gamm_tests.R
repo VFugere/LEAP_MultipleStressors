@@ -56,62 +56,67 @@ merged.data$date.f <- as.factor(merged.data$date)
 #reordering
 merged.data <- select(merged.data, date:pond.id,o.nut:date.f,everything())
 
+#adding RUE
+merged.data$RUE <- with(merged.data, total_zoo/total)
+merged.data$RUE[55:56] <- 0
+
 #### finding the optimal gamm ####
 
-chla.model <- gam(log10(total) ~ o.nut + ti(date,k=4) + ti(sc.gly, k = 4) + ti(sc.imi, k = 4) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=6) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(site.f, bs='re'), data=merged.data, method = 'REML')
-gam.check(chla.model)
-summary(chla.model)
-plot(chla.model)
-
-ba.model <- gam(log10(BA) ~ o.nut + ti(date,k=6) + ti(sc.gly, k = 3) + ti(sc.imi, k = 3) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=6) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(site.f, bs='re'), data=merged.data, method = 'REML')
-gam.check(ba.model)
-summary(ba.model)
-plot(ba.model)
-
-m1 <- gam(log10(BA) ~ o.nut + ti(date,k=6) + ti(sc.gly, k = 3) + ti(sc.imi, k = 3) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=6) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(site.f, bs='re'), data=merged.data, method = 'REML')
-m2 <- gam(log10(BA) ~ o.nut + ti(date,k=4) + ti(sc.gly, k = 3) + ti(sc.imi, k = 3) + ti(date,sc.gly, k=4) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=4) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=4) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=4), data=merged.data, method = 'REML')
-AIC(m1,m2)
-plot(m2)
-
-#' model with random smooths is doing a lot better (R2 and AIC). However, the basis dimension
-#' is so low that random smooths are in fact straight lines. Moreover, the need to reduce k
-#' considerably for all smooths leads to a poorer representation of pesticide effects.
-#' If I include random smooths, need to find a way to increase k by reducing number of effects
-
-m3 <- gam(log10(BA) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
-summary(m3)
-gam.check(m3)
-plot(m3)
-
-AIC(m3,m2)
-
-m4 <- gam(log10(total) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
-summary(m4)
-gam.check(m4)
-plot(m4)
-
-AIC(m4,chla.model) # model with random smooths is definitey better. All gam.check() calls suggest basis dimensions are ok
+#' chla.model <- gam(log10(total) ~ o.nut + ti(date,k=4) + ti(sc.gly, k = 4) + ti(sc.imi, k = 4) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=6) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(site.f, bs='re'), data=merged.data, method = 'REML')
+#' gam.check(chla.model)
+#' summary(chla.model)
+#' plot(chla.model)
+#' 
+#' ba.model <- gam(log10(BA) ~ o.nut + ti(date,k=6) + ti(sc.gly, k = 3) + ti(sc.imi, k = 3) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=6) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(site.f, bs='re'), data=merged.data, method = 'REML')
+#' gam.check(ba.model)
+#' summary(ba.model)
+#' plot(ba.model)
+#' 
+#' m1 <- gam(log10(BA) ~ o.nut + ti(date,k=6) + ti(sc.gly, k = 3) + ti(sc.imi, k = 3) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=6) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(site.f, bs='re'), data=merged.data, method = 'REML')
+#' m2 <- gam(log10(BA) ~ o.nut + ti(date,k=4) + ti(sc.gly, k = 3) + ti(sc.imi, k = 3) + ti(date,sc.gly, k=4) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=4) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=4) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=4), data=merged.data, method = 'REML')
+#' AIC(m1,m2)
+#' plot(m2)
+#' 
+#' #' model with random smooths is doing a lot better (R2 and AIC). However, the basis dimension
+#' #' is so low that random smooths are in fact straight lines. Moreover, the need to reduce k
+#' #' considerably for all smooths leads to a poorer representation of pesticide effects.
+#' #' If I include random smooths, need to find a way to increase k by reducing number of effects
+#' 
+#' m3 <- gam(log10(BA) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+#' summary(m3)
+#' gam.check(m3)
+#' plot(m3)
+#' 
+#' AIC(m3,m2)
+#' 
+#' m4 <- gam(log10(total) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+#' summary(m4)
+#' gam.check(m4)
+#' plot(m4)
+#' 
+#' AIC(m4,chla.model) # model with random smooths is definitey better. All gam.check() calls suggest basis dimensions are ok
 
 ba.model <- gam(log10(BA) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
 chla.model <- gam(log10(total) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
 zoo.model <- gam(log10p(total_zoo_adult) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
 
 ## finding a good distribution for 'use' variable
-
-use.model <- gam(use ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
-poisson.mod <- gam(use ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML',family=poisson)
-negbin.mod <- gam(use ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML',family=nb)
-compare_performance(use.model,poisson.mod,negbin.mod)
-gam.check(use.model)
-gam.check(poisson.mod) #worse
-gam.check(negbin.mod)
-#better to stick to gaussian model after all
+# 
+# use.model <- gam(use ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+# poisson.mod <- gam(use ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML',family=poisson)
+# negbin.mod <- gam(use ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML',family=nb)
+# compare_performance(use.model,poisson.mod,negbin.mod)
+# gam.check(use.model)
+# gam.check(poisson.mod) #worse
+# gam.check(negbin.mod)
+# #better to stick to gaussian model after all
 
 use.m <- gam(use ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
 nep.m <- gam(log10p(NEP) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+rue.m <- gam(log10(RUE) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+
 diatoms.m <- gam(log10p(diatoms) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
 prop.diatoms.m <- gam((diatoms/total) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML', family=betar)
-
 
 ###### a simple visualization of gamms ####
 
@@ -122,7 +127,7 @@ VF.gam.plot <- function(model.name, varname){
   fitted$upr <- fitted$fit + 1.96*fitted$se.fit
   #ylims <- range(c(fitted$lwr,fitted$upr))
   ylims <- range(fitted$fit)
-  vals <- seq(0,1,length.out=50) #how many lines to draw?
+  vals <- seq(0,1,length.out=30) #how many lines to draw?
   gly.cols.plot <- glycolfunc(length(vals))
   imi.cols.plot <- imicolfunc(length(vals))
   both.cols.plot <- bothcolfunc(length(vals))
@@ -194,7 +199,7 @@ pdf('~/Desktop/gamms_simpler.pdf',width=15,height=10,pointsize = 12)
 par(mfrow=c(3,6),mar=c(2,2,2,2),oma=c(2,2,0,0),cex=1)
 VF.gam.plot.simpler(model.name=ba.model, varname=expression(log[10]~bacterial~abundance~(cells/mu*L)))
 VF.gam.plot.simpler(model.name=chla.model, varname=expression(log[10]~chlorophyll~italic(a)~(mu*g/L)))
-VF.gam.plot.simpler(model.name=zoo.model, varname=expression(log[10]~'(1+zooplankton density) (ind./L)'))
+VF.gam.plot.simpler(model.name=zoo.model, varname=expression(log[10]~'(1+zooplankton density) ('~mu*g/L')'))
 mtext('date',1,outer=T,line=0.5)
 dev.off()
 
