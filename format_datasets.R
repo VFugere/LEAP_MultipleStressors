@@ -123,9 +123,14 @@ colnames(ZOO) <- str_replace(colnames(ZOO), 'spp.', 'sp')
 colnames(ZOO) <- str_replace(colnames(ZOO), 'spp', 'sp')
 colnames(ZOO) <- str_replace(colnames(ZOO), 'adulte', 'adult')
 colnames(ZOO) <- str_replace(colnames(ZOO), ' ', '_')
+colnames(ZOO) <- str_replace(colnames(ZOO), 'Trichocerca', 'Trichocerca_sp')
+
+ZOO <- select(ZOO, -total_copepodites, -total_nauplii) #redundant
 
 adult.species <- colnames(ZOO)[c(6:16,19:31)]
 crustacean.species <- colnames(ZOO)[6:16]
+cladoceran.species <- colnames(ZOO)[6:14]
+adult.copepod.species <- colnames(ZOO)[15:16]
 rotifer.species <- colnames(ZOO)[19:31]
 
 ZOO$richness <- specnumber(ZOO[,adult.species])
@@ -140,16 +145,69 @@ ZOO$evenness <- diversity(ZOO[,adult.species])/log(specnumber(ZOO[,adult.species
 ZOO$crust.evenness <- diversity(ZOO[,crustacean.species])/log(specnumber(ZOO[,crustacean.species]))
 ZOO$rot.evenness <- diversity(ZOO[,rotifer.species])/log(specnumber(ZOO[,rotifer.species]))
 
+ZOO[is.na(ZOO)] <- 0 #correcting NaN evenness values. If richness = 1, then diversity(1) and log(1) = 0. 0/0 = NaN
+
+ZOO.density <- ZOO # saving ZOO to zoo density before biomass conversion
+
+#loading biomass matrix
+biomass <- read_xlsx('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/Zooplankton/biomass-calculations-LEAP-zoo-MP_final.xlsx')
+#colnames(ZOO)[6:31] %in% biomass$Species
+biomass$Species <- str_replace(biomass$Species, 'sp\\.', 'sp')
+#colnames(ZOO)[6:31] %in% biomass$Species
+colnames(biomass) <- c('species','mass.ug')
+biomass <- as.data.frame(biomass)
+
+#converting abundance matrix
+for(i in 6:31){
+  target.sp <- colnames(ZOO)[i]
+  mass.target.sp <- biomass[biomass$species == target.sp,'mass.ug']
+  ZOO[,i] <- ZOO[,i]*mass.target.sp
+}
+
+#recalculating totals
+ZOO$total_zoo_adult <- apply(ZOO[,adult.species], 1, sum)
+ZOO$total_crustacean_adult <- apply(ZOO[,crustacean.species], 1, sum)
+ZOO$total_clado <- apply(ZOO[,cladoceran.species], 1, sum)
+ZOO$total_copepod_adult <- apply(ZOO[,adult.copepod.species], 1, sum)
+ZOO$total_rotifer <- apply(ZOO[,rotifer.species], 1, sum)
+
+#recalculting diversity indices
+ZOO$richness <- specnumber(ZOO[,adult.species])
+ZOO$crust.richness <- specnumber(ZOO[,crustacean.species])
+ZOO$rot.richness <- specnumber(ZOO[,rotifer.species])
+
+ZOO$alphadiv <- exp(diversity(ZOO[,adult.species]))
+ZOO$crust.alphadiv <- exp(diversity(ZOO[,crustacean.species]))
+ZOO$rot.alphadiv <- exp(diversity(ZOO[,rotifer.species]))
+
+ZOO$evenness <- diversity(ZOO[,adult.species])/log(specnumber(ZOO[,adult.species]))
+ZOO$crust.evenness <- diversity(ZOO[,crustacean.species])/log(specnumber(ZOO[,crustacean.species]))
+ZOO$rot.evenness <- diversity(ZOO[,rotifer.species])/log(specnumber(ZOO[,rotifer.species]))
+
+ZOO[is.na(ZOO)] <- 0 #correcting NaN evenness values. If richness = 1, then diversity(1) and log(1) = 0. 0/0 = NaN
+
+ZOO.biomass <- ZOO
+rm(ZOO)
+
 #### bind and clean ####
 
 merged.data <- inner_join(FP,YSI, by = c('date','site')) %>%
   inner_join(FC, by = c('date','site')) %>%
   inner_join(EP, by = c('date','site')) %>%
-  inner_join(select(ZOO, -date, -time_pt, -day_exp), by = c('site', 'date' = 'day_adj')) %>%
+  inner_join(select(ZOO.biomass, -date, -time_pt, -day_exp), by = c('site', 'date' = 'day_adj')) %>%
   left_join(treat, by = c('site')) %>% 
   select(-gly.target.ppb,-imi.target.ppb,-water) %>%
   mutate(nut = as.numeric(factor(nut, levels=c('low','high')))) %>%
-  select(date, site, gly:pond.id, NEP:SPC.mean, BA, AWCD:Amines_amides, greens:total, total_zoo_adult:rot.evenness, Alona_sp:Monostyla_quadridentata, everything())
+  select(date, site, gly:pond.id, NEP:SPC.mean, BA, AWCD:Amines_amides, greens:total, total_zoo_adult:total_rotifer, Copepodite:Nauplii, richness:rot.evenness, Alona_sp:Monostyla_quadridentata, everything())
+
+merged.data.zoo.density <- inner_join(FP,YSI, by = c('date','site')) %>%
+  inner_join(FC, by = c('date','site')) %>%
+  inner_join(EP, by = c('date','site')) %>%
+  inner_join(select(ZOO.density, -date, -time_pt, -day_exp), by = c('site', 'date' = 'day_adj')) %>%
+  left_join(treat, by = c('site')) %>% 
+  select(-gly.target.ppb,-imi.target.ppb,-water) %>%
+  mutate(nut = as.numeric(factor(nut, levels=c('low','high')))) %>%
+  select(date, site, gly:pond.id, NEP:SPC.mean, BA, AWCD:Amines_amides, greens:total, total_zoo_adult:total_rotifer, Copepodite:Nauplii, richness:rot.evenness, Alona_sp:Monostyla_quadridentata, everything())
 
 #### output data ####
 
