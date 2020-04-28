@@ -233,7 +233,7 @@ for(v in 5:ncol(tree.data)){
 
 dev.off()
 
-sem.data <- select(tree.data, date:NEP, BA, use, greens, diatoms, total_crustacean_adult, total_nauplii, total_copepodites, total_rotifer)
+sem.data <- select(tree.data, date:NEP, BA, use, greens, diatoms, total_crustacean_adult, Nauplii, Copepodite, total_rotifer)
 
 pdf('~/Desktop/reg_trees_sem.pdf',width=12,height = 8,pointsize = 8,onefile = T)
 par(mfrow=c(1,1),mar=c(4,4,1,1),oma=c(0,0,0,0),cex=1)
