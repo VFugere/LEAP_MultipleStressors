@@ -98,7 +98,7 @@ merged.data$RUE[55:56] <- 0
 
 ba.model <- gam(log10(BA) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
 chla.model <- gam(log10(total) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
-zoo.model <- gam(log10p(total_zoo_adult) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+zoo.model <- gam(log10p(total_zoo) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
 
 ## finding a good distribution for 'use' variable
 # 
@@ -113,20 +113,15 @@ zoo.model <- gam(log10p(total_zoo_adult) ~ o.nut + ti(date,k=5) + ti(date,sc.gly
 
 use.m <- gam(use ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
 nep.m <- gam(log10p(NEP) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
-rue.m <- gam(log10(RUE) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
-
+rue.m <- gam(log10(RUE) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, subset=is.finite(log(RUE)), method = 'REML')
 diatoms.m <- gam(log10p(diatoms) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
 prop.diatoms.m <- gam((diatoms/total) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML', family=betar)
 
 ###### a simple visualization of gamms ####
 
 VF.gam.plot <- function(model.name, varname){
-  fitted <- as.data.frame(predict(model.name, se.fit = T,exclude='s(date,site.f)'))
-  #fitted <- as.data.frame(predict(model.name, se.fit = T,exclude='s(site.f)'))
-  fitted$lwr <- fitted$fit - 1.96*fitted$se.fit
-  fitted$upr <- fitted$fit + 1.96*fitted$se.fit
-  #ylims <- range(c(fitted$lwr,fitted$upr))
-  ylims <- range(fitted$fit)
+  #fitted <- as.data.frame(predict(model.name))
+  ylims <- range(fitted(model.name))
   vals <- seq(0,1,length.out=30) #how many lines to draw?
   gly.cols.plot <- glycolfunc(length(vals))
   imi.cols.plot <- imicolfunc(length(vals))
@@ -156,7 +151,7 @@ pdf('~/Desktop/gamms.pdf',width=15,height=10,pointsize = 12)
 par(mfrow=c(3,6),mar=c(2,2,2,2),oma=c(2,2,0,0),cex=1)
 VF.gam.plot(model.name=ba.model, varname=expression(log[10]~bacterial~abundance~(cells/mu*L)))
 VF.gam.plot(model.name=chla.model, varname=expression(log[10]~chlorophyll~italic(a)~(mu*g/L)))
-VF.gam.plot(model.name=zoo.model, varname=expression(log[10]~'(1+zooplankton density) (ind./L)'))
+VF.gam.plot(model.name=zoo.model, varname=expression(log[10](1+zooplankton~biomass)~(mu*g/L)))
 mtext('date',1,outer=T,line=0.5)
 dev.off()
 
@@ -199,7 +194,7 @@ pdf('~/Desktop/gamms_simpler.pdf',width=15,height=10,pointsize = 12)
 par(mfrow=c(3,6),mar=c(2,2,2,2),oma=c(2,2,0,0),cex=1)
 VF.gam.plot.simpler(model.name=ba.model, varname=expression(log[10]~bacterial~abundance~(cells/mu*L)))
 VF.gam.plot.simpler(model.name=chla.model, varname=expression(log[10]~chlorophyll~italic(a)~(mu*g/L)))
-VF.gam.plot.simpler(model.name=zoo.model, varname=expression(log[10]~'(1+zooplankton density) ('~mu*g/L')'))
+VF.gam.plot.simpler(model.name=zoo.model, varname=expression(log[10](1+zooplankton~biomass)~(mu*g/L)))
 mtext('date',1,outer=T,line=0.5)
 dev.off()
 
@@ -289,7 +284,7 @@ pdf('~/Desktop/3dplots.pdf',width=14,height=6,pointsize = 8,onefile = T)
 par(mfrow=c(2,6),mar=c(0,0,0,0),oma=c(2,2,2,2),cex=1,xpd=T)
 VF.3D.plot(ba.model,'BA')
 VF.3D.plot(chla.model,'chlorophyll')
-VF.3D.plot(zoo.model,'zoo density')
+VF.3D.plot(zoo.model,'zoo biomass')
 dev.off()
 
 ##### Linear models to quantify effect sizes#####
