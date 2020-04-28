@@ -1,4 +1,4 @@
-  ## Code to analyze LEAP 2016 MS data
+## Code to analyze LEAP 2016 MS data
 ## Vincent Fugère 2019-2020
 ## This is a raw/rough data exploration script:
 ## Older code for UQAM LEAP talk in April 2019
@@ -80,11 +80,16 @@ merged.data$date.f <- as.factor(merged.data$date)
 #reordering
 merged.data <- select(merged.data, date:pond.id,o.nut:date.f,everything())
 
+#adding RUE
+merged.data$RUE <- with(merged.data, total_zoo/total)
+merged.data$RUE[55:56] <- 0
+
 #### Plot data ####
 
 plot.data <- merged.data
-plot.data <- plot.data %>% mutate_at(vars(BA,greens,total), log10) %>%
-  mutate_at(vars(NEP,cyanos:cryptos,total_zoo_adult:Monostyla_quadridentata), log10p)
+plot.data <- plot.data %>% mutate_at(vars(BA,greens,total,RUE), log10) %>%
+  mutate_at(vars(NEP,cyanos:cryptos,total_zoo:Monostyla_quadridentata), log10p)
+plot.data <- select(plot.data, date:date.f, pH.diff:SPC.mean, BA:use, greens:total, NEP, total_zoo:rot.evenness, RUE, everything())
 vars <- colnames(plot.data)[14:ncol(plot.data)]
 
 ##### Time series (6 panels) ####
@@ -96,6 +101,7 @@ for(v in 1:length(vars)){
   
   tmp <- plot.data[,c(colnames(plot.data)[1:13],vars[v])]
   tmp <- drop_na(tmp)
+  tmp <- filter(tmp, is.finite(tmp[,14]))
   
   for(letter in c('C','D','E','H','J','K')){
     
@@ -134,6 +140,8 @@ for(v in 1:length(vars)){
   
   tmp <- plot.data[,c(colnames(plot.data)[1:13],vars[v])]
   tmp <- drop_na(tmp)
+  tmp <- filter(tmp, is.finite(tmp[,14]))
+  
   tmp$date.idx <- tmp$date - 0.6
   tmp$date.idx[tmp$nut.num == 2] <- tmp$date[tmp$nut.num == 2] + 0.6
   for(letter in c('C|D','E|H','J|K')){
@@ -168,6 +176,7 @@ pchs.2 <- c(16,15)
 for(v in 1:length(vars)){
   tmp <- plot.data[,c(colnames(plot.data)[1:13],vars[v])]
   tmp <- drop_na(tmp)
+  tmp <- filter(tmp, is.finite(tmp[,14]))
   ylims <- range(tmp[,14])
   for(letter in c('C|D','E|H','J|K')){
     for(date.x in Sampling.dates){
