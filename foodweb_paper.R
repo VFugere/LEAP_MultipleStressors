@@ -253,6 +253,54 @@ legend('topleft',bty='n',legend='dose 2',cex=0.95)
 
 dev.off()
 
+#### supplementary figure: other physico-chem variables ####
+
+pdf('~/Desktop/FigS1.pdf',width=7,height = 5,pointsize = 8)
+par(mfrow=c(4,3),mar=c(2,2,1,1),oma=c(2.5,2.5,1,1),cex=1)
+pchs.2 <- c(16,15)
+vars <- c('pH.mean','DO.mean','SPC.mean')
+var.names <- c(expression(pH),expression(DO~'(mg/L)'),expression(SPC~(mu*g/cm)))
+
+for(v in 1:3){
+  tmp <- merged.data[,c(colnames(merged.data)[1:13],vars[v])]
+  tmp$date.idx <- tmp$date - 0.6
+  tmp$date.idx[tmp$nut.num == 2] <- tmp$date[tmp$nut.num == 2] + 0.6
+  for(letter in c('C|D','E|H','J|K')){
+    plotfunctions::emptyPlot(xlim=c(1,43),ylim=range(tmp[,14]),yaxt='n',xaxt='n',ann=F, bty='l')
+    axis(2,cex.axis=1,lwd=0,lwd.ticks=1)
+    axis(1,cex.axis=1,lwd=0,lwd.ticks=1)
+    tmp.sub <- filter(tmp, str_detect(site, letter))
+    for(i in 1:n_distinct(tmp.sub$site)){
+      pond <- unique(tmp.sub$site)[i]
+      sub.sub <- filter(tmp.sub, site == pond)
+      points(x=sub.sub$date.idx,y=sub.sub[,14],type='o',lwd=1.2, pch=pchs.2[sub.sub$nut.num], col=alpha(allcols[sub.sub$pond.id],1))
+    }
+    abline(v=pulse.dates[1:2],lty=3)
+    if(letter == 'C|D'){mtext(var.names[v],side=2,line=3)}
+  }
+}
+
+xmax <- 2064
+hobodat <- hobodat %>% select(-date, -time) %>% gather('site', 'temp', -time.num)
+hobodat <- left_join(hobodat, treat, by = 'site')
+for(letter in c('C|D','E|H','J|K')){
+  plotfunctions::emptyPlot(xlim=c(1,xmax),ylim=range(hobodat$temp),yaxt='n',xaxt='n',ann=F, bty='l')
+  axis(2,cex.axis=1,lwd=0,lwd.ticks=1)
+  axis(1,cex.axis=1,lwd=0,lwd.ticks=1)
+  hobodat.sub <- filter(hobodat, str_detect(site, letter))
+  for(i in 1:n_distinct(hobodat.sub$site)){
+    pond <- unique(hobodat.sub$site)[i]
+    sub.sub <- filter(hobodat.sub, site == pond)
+    points(x=sub.sub$time.num,y=sub.sub$temp,type='l',lwd=1, col=alpha(allcols[sub.sub$pond.id],0.9))
+  }
+  abline(v=(pulse.dates[1:2])*48,lty=3)
+  if(letter == 'C|D'){mtext("temperature (°C)",side=2,line=3)}
+}
+
+mtext('day of experiment',side=1,outer=T,line=1)
+
+dev.off()
+
 ##### format treatment variables for models ####
 
 #adding ordered factor for GAMs
@@ -266,4 +314,14 @@ merged.data$site.f <- as.factor(merged.data$site)
 merged.data$date.f <- as.factor(merged.data$date)
 #reordering
 merged.data <- select(merged.data, date:pond.id,o.nut:date.f,everything())
+
+#### fitting GAMMs ####
+
+ba.mo <- gam(log10(BA) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+chla.m <- gam(log10(total) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+zoo.m <- gam(biomass ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+
+use.m <- gam(use ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+nep.m <- gam(log10p(NEP) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+rue.m <- gam(y ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
 
