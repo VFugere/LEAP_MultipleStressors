@@ -110,6 +110,9 @@ rm(EP2)
 #### zooplankton ####
 
 ZOO <- read_xlsx('~/Google Drive/Recherche/LEAP Postdoc/2016/raw data/Zooplankton/LEAP2016-zoo-abundance_clean-perL_final.xlsx')
+
+ZOO$total_zoo <- apply(ZOO[,5:30], 1, sum)
+
 ZOO$day_adj <- ZOO$day_exp
 ZOO$day_adj[ZOO$day_exp == 3] <- 1
 ZOO$day_adj[ZOO$day_exp == 9] <- 7
@@ -117,7 +120,9 @@ ZOO$day_adj[ZOO$day_exp == 16] <- 15
 ZOO$day_adj[ZOO$day_exp == 31] <- 30
 ZOO$day_adj[ZOO$day_exp == 36] <- 35
 ZOO$day_adj[ZOO$day_exp == 44] <- 43
+
 ZOO <- select(ZOO, site:day_exp, day_adj, everything())
+
 colnames(ZOO)[6:31] <- str_to_sentence(colnames(ZOO)[6:31])
 colnames(ZOO) <- str_replace(colnames(ZOO), 'spp.', 'sp')
 colnames(ZOO) <- str_replace(colnames(ZOO), 'spp', 'sp')
@@ -126,6 +131,7 @@ colnames(ZOO) <- str_replace(colnames(ZOO), ' ', '_')
 colnames(ZOO) <- str_replace(colnames(ZOO), 'Trichocerca', 'Trichocerca_sp')
 
 ZOO <- select(ZOO, -total_copepodites, -total_nauplii) #redundant
+ZOO <- select(ZOO, site:day_adj, Alona_sp:Monostyla_quadridentata,total_zoo,total_zoo_adult:total_rotifer) #redundant
 
 adult.species <- colnames(ZOO)[c(6:16,19:31)]
 crustacean.species <- colnames(ZOO)[6:16]
@@ -165,6 +171,7 @@ for(i in 6:31){
 }
 
 #recalculating totals
+ZOO$total_zoo <- apply(ZOO[,6:31], 1, sum)
 ZOO$total_zoo_adult <- apply(ZOO[,adult.species], 1, sum)
 ZOO$total_crustacean_adult <- apply(ZOO[,crustacean.species], 1, sum)
 ZOO$total_clado <- apply(ZOO[,cladoceran.species], 1, sum)
@@ -198,7 +205,7 @@ merged.data <- inner_join(FP,YSI, by = c('date','site')) %>%
   left_join(treat, by = c('site')) %>% 
   select(-gly.target.ppb,-imi.target.ppb,-water) %>%
   mutate(nut = as.numeric(factor(nut, levels=c('low','high')))) %>%
-  select(date, site, gly:pond.id, NEP:SPC.mean, BA, AWCD:Amines_amides, greens:total, total_zoo_adult:total_rotifer, Copepodite:Nauplii, richness:rot.evenness, Alona_sp:Monostyla_quadridentata, everything())
+  select(date, site, gly:pond.id, NEP:SPC.mean, BA, AWCD:Amines_amides, greens:total, total_zoo:total_rotifer, Copepodite:Nauplii, richness:rot.evenness, Alona_sp:Monostyla_quadridentata, everything())
 
 merged.data.zoo.density <- inner_join(FP,YSI, by = c('date','site')) %>%
   inner_join(FC, by = c('date','site')) %>%
@@ -207,7 +214,7 @@ merged.data.zoo.density <- inner_join(FP,YSI, by = c('date','site')) %>%
   left_join(treat, by = c('site')) %>% 
   select(-gly.target.ppb,-imi.target.ppb,-water) %>%
   mutate(nut = as.numeric(factor(nut, levels=c('low','high')))) %>%
-  select(date, site, gly:pond.id, NEP:SPC.mean, BA, AWCD:Amines_amides, greens:total, total_zoo_adult:total_rotifer, Copepodite:Nauplii, richness:rot.evenness, Alona_sp:Monostyla_quadridentata, everything())
+  select(date, site, gly:pond.id, NEP:SPC.mean, BA, AWCD:Amines_amides, greens:total, total_zoo:total_rotifer, Copepodite:Nauplii, richness:rot.evenness, Alona_sp:Monostyla_quadridentata, everything())
 
 #### output data ####
 
