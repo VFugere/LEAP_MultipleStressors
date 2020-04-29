@@ -210,7 +210,7 @@ dev.off()
 
 pdf('~/Desktop/gamms_simpler_ef.pdf',width=15,height=10,pointsize = 12)
 par(mfrow=c(3,6),mar=c(2,2,2,2),oma=c(2,2,0,0),cex=1)
-VF.gam.plot.simpler(model.name=use.m, varname=expression(carbon~use~potential))
+VF.gam.plot.simpler(model.name=use.m, varname=expression(C~sources~used))
 VF.gam.plot.simpler(model.name=nep.m, varname=expression(log[10]~daytime~Delta*DO~(mu*g/L)))
 VF.gam.plot.simpler(model.name=rue.m, varname=expression(log[10]~RUE~(mu*g/mu*g)))
 mtext('date',1,outer=T,line=0.5)
