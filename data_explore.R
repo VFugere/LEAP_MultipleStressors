@@ -204,7 +204,63 @@ for(v in 1:length(vars)){
 
 dev.off()
 
+#### scatterplot arrays with gamms ####
+
+load('~/Google Drive/Recherche/LEAP Postdoc/2016/GAMMs.RData')
+
+scattergam <- function(var, varname, model.name, xticks=F){
+  tmp <- plot.data[,c(colnames(plot.data)[1:13],var)]
+  tmp <- drop_na(tmp)
+  tmp <- filter(tmp, is.finite(tmp[,14]))
+  ylims <- range(tmp[,14])
+  for(date.x in Sampling.dates){
+    sub <- tmp %>% filter(date == date.x)
+    sub$pesticide <- rescale(as.numeric(str_remove(sub$site, 'C|D|E|H|J|K')),c(0,1))
+    if(date.x == 1 & xticks==T){
+      plot(y=sub[,14],x=sub[,15],bty='o',xlim=c(-0.05,1.05),type='p',ylim=ylims,pch=pchs[sub$nut.num],col=allcols[sub$pond.id],xlab=NULL,ylab=NULL, xaxt='n')
+      mtext(varname,side=2,outer=F,line=2.5,cex=1.1)
+      axis(1,at=rescale(1:8,c(0,1)),labels=1:8,lwd=0,lwd.ticks = 1)
+    }else if(date.x == 1 & xticks==F){
+      plot(y=sub[,14],x=sub[,15],bty='o',xlim=c(-0.05,1.05),type='p',ylim=ylims,pch=pchs[sub$nut.num],col=allcols[sub$pond.id],xlab=NULL,ylab=NULL, xaxt='n')
+      mtext(varname,side=2,outer=F,line=2.5,cex=1.1)
+    }else if(date.x != 1 & xticks==T){
+      plot(y=sub[,14],x=sub[,15],bty='o',xlim=c(-0.05,1.05),type='p',ylim=ylims,pch=pchs[sub$nut.num],col=allcols[sub$pond.id],xlab=NULL,ylab=NULL,yaxt='n', xaxt='n')
+      axis(1,at=rescale(1:8,c(0,1)),labels=1:8,lwd=0,lwd.ticks = 1)
+    }else{
+      plot(y=sub[,14],x=sub[,15],bty='o',xlim=c(-0.05,1.05),type='p',ylim=ylims,pch=pchs[sub$nut.num],col=allcols[sub$pond.id],xlab=NULL,ylab=NULL,yaxt='n',xaxt='n')
+    }
+    plot_smooth(model.name, view="sc.gly", cond=list('date'=date.x,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=alpha(gly.cols[8],0.7),lty=1,add=T,print.summary = F,se=0)
+    plot_smooth(model.name, view="sc.gly", cond=list('date'=date.x,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=alpha(gly.cols[8],0.7),lty=2,lwd=1.5,add=T,print.summary = F,se=0)
+    plot_smooth(model.name, view="sc.imi", cond=list('date'=date.x,'sc.gly'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=alpha(imi.cols[8],0.7),lty=1,add=T,print.summary = F,se=0)
+    plot_smooth(model.name, view="sc.imi", cond=list('date'=date.x,'sc.gly'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=alpha(imi.cols[8],0.7),lty=2,lwd=1.5,add=T,print.summary = F,se=0)
+    fitvals <- predict.gam(model.name, newdata = list('date' = rep(date.x,200), 'sc.gly' = rep(seq(0,1,length.out=100),2), 'sc.imi' = rep(seq(0,1,length.out=100),2), 'o.nut' = c(rep('low',100),rep('high',100)), 'site.f' = rep('C1',200)), exclude = s(date,site.f))
+    points(fitvals[1:100]~seq(0,1,length.out=100),type='l',col=alpha(both.cols[8],0.7),lty=1)  
+    points(fitvals[101:200]~seq(0,1,length.out=100),type='l',col=alpha(both.cols[8],0.7),lty=2,lwd=1.5)  
+  }
+}
+
+
+pdf('~/Desktop/scattergams.pdf',width=8.5,height = 5.5,pointsize = 10)
+par(mfrow=c(3,6),mar=c(0.1,0.1,0.1,0.1),oma=c(4,4,2,0.5),cex=1,xpd=T)
+scattergam(var='BA',varname=expression(log[10]~BA~(cells/mu*L)),model.name=ba.m)
+scattergam(var='total',model.name=chla.m, varname=expression(log[10]~chl.~italic(a)~(mu*g/L)))
+scattergam(var='total_zoo',model.name=zoo.m, varname=expression(log[10](1+zoo)~(mu*g/L)),xticks=T)
+mtext(paste('day',Sampling.dates,' '),side=3,outer=T,line=0.1,at=seq(0.1,0.93,length.out = 6),adj=0.5,cex=1.1)
+mtext('pesticide nominal concentration (dose 1 to 8)',side=1,outer=T,line=2.5,cex=1.1)
+dev.off()
+
+pdf('~/Desktop/scattergams_EF.pdf',width=8.5,height = 5.5,pointsize = 10)
+par(mfrow=c(3,6),mar=c(0.1,0.1,0.1,0.1),oma=c(4,4,2,0.5),cex=1,xpd=T)
+scattergam(var='use',varname=expression(C~sources~used),model.name=use.m)
+scattergam(var='NEP',model.name=nep.m, varname=expression(log[10]~(1+Delta*DO)~(mu*g/L)))
+scattergam(var='RUE',model.name=rue.m, varname=expression(log[10]~RUE~(mu*g/mu*g)),xticks=T)
+mtext(paste('day',Sampling.dates,' '),side=3,outer=T,line=0.1,at=seq(0.1,0.93,length.out = 6),adj=0.5,cex=1.1)
+mtext('pesticide nominal concentration (dose 1 to 8)',side=1,outer=T,line=2.5,cex=1.1)
+dev.off()
+
+
 #### data exploration: correlations in the dataset ####
+
 
 less.data <- plot.data %>% select(date:rot.richness)
 
