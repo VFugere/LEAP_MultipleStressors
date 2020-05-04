@@ -173,31 +173,25 @@ VF.gam.plot.simpler <- function(model.name, varname){
   fitted$lwr <- fitted$fit - 1.96*fitted$se.fit
   fitted$upr <- fitted$fit + 1.96*fitted$se.fit
   ylims <- range(c(fitted$lwr,fitted$upr))
-  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims)
-  plot_smooth(model.name, view="date", cond=list('sc.gly'=0.5,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=gly.cols[4],add=T,print.summary = F)
-  plot_smooth(model.name, view="date", cond=list('sc.gly'=1,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=gly.cols[8],add=T,print.summary = F)
-  legend('topleft',legend='low',bty='n')
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims,lwd=2)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0.5,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=gly.cols[5],add=T,print.summary = F,lwd=2)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=1,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=gly.cols[8],add=T,print.summary = F,lwd=2)
   mtext(varname,2,line=2.5)
-  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims)
-  plot_smooth(model.name, view="date", cond=list('sc.gly'=0.5,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=gly.cols[4],add=T,print.summary = F)
-  plot_smooth(model.name, view="date", cond=list('sc.gly'=1,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=gly.cols[8],add=T,print.summary = F)
-  legend('topleft',legend='high',bty='n')
-  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims)
-  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0.5,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=imi.cols[4],add=T,print.summary = F)
-  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=1,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=imi.cols[8],add=T,print.summary = F)
-  legend('topleft',legend='low',bty='n')
-  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims)
-  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0.5,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=imi.cols[4],add=T,print.summary = F)
-  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=1,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=imi.cols[8],add=T,print.summary = F)
-  legend('topleft',legend='high',bty='n')
-  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims)
-  plot_smooth(model.name, view="date", cond=list('sc.gly'=0.5,'sc.imi'=0.5,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=both.cols[4],add=T,print.summary = F)
-  plot_smooth(model.name, view="date", cond=list('sc.gly'=1,'sc.imi'=1,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=both.cols[8],add=T,print.summary = F)
-  legend('topleft',legend='low',bty='n')
-  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims)
-  plot_smooth(model.name, view="date", cond=list('sc.gly'=0.5,'sc.imi'=0.5,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=both.cols[4],add=T,print.summary = F)
-  plot_smooth(model.name, view="date", cond=list('sc.gly'=1,'sc.imi'=1,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=both.cols[8],add=T,print.summary = F)
-  legend('topleft',legend='high',bty='n')
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims,lwd=2)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0.5,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=gly.cols[5],add=T,print.summary = F,lwd=2)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=1,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=gly.cols[8],add=T,print.summary = F,lwd=2)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims,lwd=2)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0.5,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=imi.cols[5],add=T,print.summary = F,lwd=2)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=1,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=imi.cols[8],add=T,print.summary = F,lwd=2)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims,lwd=2)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0.5,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=imi.cols[5],add=T,print.summary = F,lwd=2)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=1,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=imi.cols[8],add=T,print.summary = F,lwd=2)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims,lwd=2)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0.5,'sc.imi'=0.5,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=both.cols[5],add=T,print.summary = F,lwd=2)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=1,'sc.imi'=1,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=both.cols[8],add=T,print.summary = F,lwd=2)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='l',legend_plot_all = F, h0=NA,ylim = ylims,lwd=2)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=0.5,'sc.imi'=0.5,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=both.cols[5],add=T,print.summary = F,lwd=2)
+  plot_smooth(model.name, view="date", cond=list('sc.gly'=1,'sc.imi'=1,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=both.cols[8],add=T,print.summary = F,lwd=2)
 }
 
 pdf('~/Desktop/gamms_simpler.pdf',width=15,height=10,pointsize = 12)
@@ -218,36 +212,37 @@ dev.off()
 
 #### contour plots ####
 
-heatcolfunc <- colorRampPalette(brewer.pal(11, 'RdYlBu')[11:1])
-heat.cols <- heatcolfunc(50)
+# heatcolfunc <- colorRampPalette(brewer.pal(11, 'RdYlBu')[11:1])
+# heat.cols <- heatcolfunc(50)
 #heat.cols <- wes_palette('Zissou1', 50, 'continuous')
-#heat.cols <- viridis(50)
+heat.cols <- viridis(50)
 
-VF.cont.plot <- function(model.name){
+VF.cont.plot <- function(model.name,varname){
   zlims <- range( fitted <- as.data.frame(predict(model.name, se.fit = F,exclude='s(date,site.f)')))
   for(nut.lvl in c('low','high')){
     for(date.x in Sampling.dates){
-      fvisgam(model.name, view = c('sc.gly','sc.imi'), too.far=0.3,cond = list('date' = date.x, 'o.nut' = nut.lvl), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = heat.cols, main = NULL,rm.ranef = T,dec=1,print.summary = F,yaxt='n',xaxt='n',xlab=NULL,ylab=NULL)
+      if(date.x == 43 & nut.lvl == 'low'){
+        fvisgam(model.name, view = c('sc.gly','sc.imi'), too.far=0.3,cond = list('date' = date.x, 'o.nut' = nut.lvl), zlim=zlims, add.color.legend=T,dec=1,hide.label=T,plot.type = 'contour', lwd=1.5,color = heat.cols, main = NULL,rm.ranef = T,print.summary = F,yaxt='n',xaxt='n',xlab=NULL,ylab=NULL)
+        }else{
+        fvisgam(model.name, view = c('sc.gly','sc.imi'), too.far=0.3,cond = list('date' = date.x, 'o.nut' = nut.lvl), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = heat.cols, main = NULL,rm.ranef = T,print.summary = F,yaxt='n',xaxt='n',xlab=NULL,ylab=NULL)
+      }
     }
   }
   mtext('glyphosate',1,outer=T,line=0.5)
   mtext('imidacloprid',2,outer=T,line=0.5)
   mtext(paste('day',Sampling.dates,' '),side=3,outer=T,line=0.5,at=seq(0.09,0.92,length.out = 6),adj=0.5)
-  mtext(c('low nut','high nut'),side=4,outer=T,line=0.5,at=c(0.75,0.25))
+  mtext(c('low nut.','high nut.'),side=4,outer=T,line=0.5,at=c(0.75,0.25))
+  mtext(varname,side=3,outer=T,line=2,adj=0.5,cex=1.2)
 }
 
-pdf('~/Desktop/contourplots.pdf',width=7.5,height=3,pointsize = 12,onefile = T)
-par(mfrow=c(2,6),mar=c(0.1,0.1,0.1,0.1),oma=c(2,2,2,2),cex=1,xpd=T)
-VF.cont.plot(ba.m)
-VF.cont.plot(chla.m)
-VF.cont.plot(zoo.m)
-dev.off()
-
-pdf('~/Desktop/contourplots_ef.pdf',width=7.5,height=3,pointsize = 12,onefile = T)
-par(mfrow=c(2,6),mar=c(0.1,0.1,0.1,0.1),oma=c(2,2,2,2),cex=1,xpd=T)
-VF.cont.plot(use.m)
-VF.cont.plot(nep.m)
-VF.cont.plot(rue.m)
+pdf('~/Desktop/contourplots.pdf',width=7.5,height=3.5,pointsize = 10,onefile = T)
+par(mfrow=c(2,6),mar=c(0.1,0.1,0.1,0.1),oma=c(2,2,3.5,2),cex=1,xpd=T)
+VF.cont.plot(model.name=ba.m, varname=expression(log[10]~bacterial~abundance~(cells/mu*L)))
+VF.cont.plot(model.name=chla.m, varname=expression(log[10]~chlorophyll~italic(a)~(mu*g/L)))
+VF.cont.plot(model.name=zoo.m, varname=expression(log[10](1+zooplankton~biomass)~(mu*g/L)))
+VF.cont.plot(model.name=use.m, varname=expression(carbon~use~potential))
+VF.cont.plot(model.name=nep.m, varname=expression(log[10]~daytime~Delta*DO~(mu*g/L)))
+VF.cont.plot(model.name=rue.m, varname=expression(log[10]~zooplankton:phytoplankton~(mu*g/mu*g)))
 dev.off()
 
 #### other gamms:ef, diatoms ####
