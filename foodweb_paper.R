@@ -722,12 +722,14 @@ load('~/Google Drive/Recherche/LEAP Postdoc/2016/GAMMs.RData')
 # 
 # save_html(gamtabs(ba.m), file='~/Desktop/S3.html')
 
-gam.plot <- function(model.name, varname, xticks=F){
+gam.plot <- function(model.name, varname, xticks=F, scale.up.y=F){
   fitted <- as.data.frame(predict(model.name, se.fit = T,exclude='s(date,site.f)'))
   fitted$lwr <- fitted$fit - 2*fitted$se.fit
   fitted$upr <- fitted$fit + 2*fitted$se.fit
   ylims <- range(c(fitted$lwr,fitted$upr))
-  ylims[2] <- ylims[2] * 1.11 #for a few gamms, CI extends outside for some reason
+  if(scale.up.y == T){
+    ylims[2] <- ylims[2] * 1.3 #for a few gamms, CI extends outside for some reason
+  }
   if(xticks == T){
     plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='o',legend_plot_all = F, h0=NA,ylim = ylims,lwd=2,yaxt='n', xaxt='n')
     plot_smooth(model.name, view="date", cond=list('sc.gly'=0.5,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=gly.cols[5],add=T,print.summary = F,lwd=2)
@@ -798,7 +800,7 @@ gam.plot(model.name=ba.m, varname=var.names.short[1])
 gam.plot(model.name=chla.m, varname=var.names.short[2])
 gam.plot(model.name=zoo.m, varname=var.names.short[3])
 gam.plot(model.name=use.m, varname=var.names.short[4])
-gam.plot(model.name=nep.m, varname=var.names.short[5])
+gam.plot(model.name=nep.m, varname=var.names.short[5], scale.up.y = T)
 gam.plot(model.name=rue.m, varname=var.names.short[6], xticks=T)
 mtext('date',1,outer=T,line=2.5)
 mtext(rep(c('low nut.','high nut.'),3),side=3,outer=T,line=0.1,at=seq(0.09,0.92,length.out = 6),adj=0.5)
