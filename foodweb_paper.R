@@ -845,11 +845,13 @@ scattergam <- function(var, varname, model.name){
       sub <- tmp %>% filter(date == date.x, str_detect(site, letter))
       sub$pesticide <- rescale(as.numeric(str_remove(sub$site, letter)),c(0,1))
       if(date.x == 1 & letter == 'J|K'){
-        plot(y=sub[,14],x=sub[,15],xlab=NULL,ylab=NULL,bty='o',type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=1,bg=allcols[sub$pond.id])
+        plot(y=sub[,14],x=sub[,15],xlab=NULL,ylab=NULL,bty='o',type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=1,bg=allcols[sub$pond.id],xaxt='n')
+        axis(1, lwd=0, lwd.ticks = 1, at = seq(0,1,length.out = 8), labels=1:8)
       }else if(date.x == 1 & letter != 'J|K'){
         plot(y=sub[,14],x=sub[,15],xlab=NULL,ylab=NULL,bty='o',type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=1,bg=allcols[sub$pond.id],xaxt='n')
       }else if(date.x != 1 & letter == 'J|K'){
-        plot(y=sub[,14],x=sub[,15],xlab=NULL,ylab=NULL,bty='o',type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=1,bg=allcols[sub$pond.id],yaxt='n')
+        plot(y=sub[,14],x=sub[,15],xlab=NULL,ylab=NULL,bty='o',type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=1,bg=allcols[sub$pond.id],yaxt='n',xaxt='n')
+        axis(1, lwd=0, lwd.ticks = 1, at = seq(0,1,length.out = 8), labels=1:8)
       }else{
         plot(y=sub[,14],x=sub[,15],xlab=NULL,ylab=NULL,bty='o',type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=1,bg=allcols[sub$pond.id],yaxt='n',xaxt='n')
       }
