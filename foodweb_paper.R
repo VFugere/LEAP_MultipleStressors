@@ -81,7 +81,6 @@ plot(x=0,xlim=c(0,44),ylim=c(-1,1),type='n',ann=F,yaxt='n',xaxt='n',bty='n')
 abline(h=0)
 segments(x0=pulse.dates[1:2],y0=rep(-0.12,2),y1=rep(0.5,2),lty=3)
 segments(x0=Sampling.dates,y0=rep(0,6),y1=rep(-0.12,6))
-points(x=1:43,y=rep(0,43),pch=21,col=1,bg='white',cex=0.5)
 points(x=Sampling.dates,y=rep(0,6),pch=21,col=1,bg=1)
 text(x=Sampling.dates,y=rep(-0.25,6),labels=as.character(Sampling.dates),cex=0.8)
 text(x=c(2,42),y=rep(-0.5,2),labels=c('(17-Aug)','(28-Sep)'),cex=0.8)
@@ -273,7 +272,7 @@ dev.off()
 
 #### supplementary figure: other physico-chem variables ####
 
-pdf('~/Desktop/FigS2.pdf',width=7,height = 5,pointsize = 8)
+pdf('~/Desktop/FigS2.pdf',width=7,height = 7,pointsize = 8)
 par(mfrow=c(4,3),mar=c(2,2,1,1),oma=c(2.5,2.5,1,1),cex=1)
 pchs.2 <- c(21,22)
 vars <- c('pH.mean','DO.mean','SPC.mean')
@@ -349,9 +348,9 @@ vars <- c('BA','total','total_zoo','use','NEP','RUE')
 var.names <- c(expression(log[10]~bact.~(cells/mu*L)),
                expression(log[10]~chl.~italic(a)~(mu*g/L)),
                expression(log[10](1+zoo)~(mu*g/L)),
-               expression(C~sources~used),
+               expression(subtrates~used~by~bact.),
                expression(log[10]~(1+Delta*DO)~(mu*g/L)),
-               expression(log[10]~(Z:P)~(mu*g/mu*g)))
+               expression(log[10]~(Zoo:Phyto)~(mu*g/mu*g)))
 
 plot.data <- select(merged.data, date:date.f, vars)
 plot.data <- plot.data %>% mutate_at(vars(BA,total,RUE), log10)
@@ -450,17 +449,17 @@ nep.mod.lin <- lmer(log10p(NEP) ~ date.f:nut + date.f:sc.gly + date.f:sc.imi + d
 nep.coefs <- get_model_data(nep.mod.lin, type = 'est')
 
 rue.mod.lin <- lmer(log10(RUE) ~ date.f:nut + date.f:sc.gly + date.f:sc.imi + date.f:sc.gly:sc.imi + date.f:sc.gly:nut +
-                      date.f:sc.imi:nut + (1|site.f),merged.data,subset=is.finite(log(RUE)))
+                      date.f:sc.imi:nut + (1|site.f),merged.data,subset=is.finite(log10(RUE)))
 rue.coefs <- get_model_data(rue.mod.lin, type = 'est')
 
-tab_model(ba.mod.lin,chla.mod.lin,zoo.mod.lin, dv.labels = c('bacterial abundance','chlorophyll a','zooplankton biomass'), file='~/Desktop/TableS1.html')
-tab_model(EP.mod.lin,nep.mod.lin,rue.mod.lin, dv.labels = c('C substrates used','oxygen production','zooplankton:phytoplankton'), file='~/Desktop/TableS2.html')
+tab_model(ba.mod.lin,chla.mod.lin,zoo.mod.lin, dv.labels = c('bacterial abundance','chlorophyll a','zooplankton biomass'), file='~/Desktop/TableS1.doc')
+tab_model(EP.mod.lin,nep.mod.lin,rue.mod.lin, dv.labels = c('C substrates used','oxygen production','zooplankton:phytoplankton'), file='~/Desktop/TableS2.doc')
 
 #### Figure 4: coef plot ####
 
 pdf('~/Desktop/Fig4.pdf',width=6,height = 6,pointsize = 12)
 
-var.names <- c('Bact.','Chl. a','Zoo.','C use',expression(Delta*DO),'Z:P')
+var.names.short <- c('Bact.','Chl. a','Zoo.','Subs. used',expression(Delta*DO),'Z:P')
 
 par(mfrow=c(6,6),mar=c(0.1,0.1,0.1,0.1),oma=c(4,4.5,3,0.5),cex=1)
 
@@ -473,7 +472,7 @@ rect(par('usr')[1],par('usr')[3],par('usr')[2],par('usr')[4],col = alpha(gly.col
 abline(h=0,col=1);abline(v=c(1.5,4.5),lty=3)
 points(x=1:6,y=ba.coefs$estimate[1:6],pch=16,col=scales::alpha('black',ba.coefs$alpha[1:6]))
 arrows(x0=1:6,y0=ba.coefs$conf.low[1:6],y1=ba.coefs$conf.high[1:6],length=0,col=scales::alpha('black',ba.coefs$alpha[1:6]))
-mtext(var.names[1],side=2,outer=F,line=1,cex=1)
+mtext(var.names.short[1],side=2,outer=F,line=1,cex=1)
 axis(2,lwd=0,lwd.ticks = 1,at=0,labels='')
 plot(x=NULL,xlim=c(0.5,6.5),ylim=range(c(ba.coefs$conf.low,ba.coefs$conf.high)),bty='o',yaxt='n',xaxt='n')
 rect(par('usr')[1],par('usr')[3],par('usr')[2],par('usr')[4],col = alpha(gly.cols[4],0.2), border = NA)
@@ -516,7 +515,7 @@ rect(par('usr')[1],par('usr')[3],par('usr')[2],par('usr')[4],col = alpha(gly.col
 abline(h=0,col=1);abline(v=c(1.5,4.5),lty=3)
 points(x=1:6,y=chla.coefs$estimate[1:6],pch=16,col=scales::alpha('black',chla.coefs$alpha[1:6]))
 arrows(x0=1:6,y0=chla.coefs$conf.low[1:6],y1=chla.coefs$conf.high[1:6],length=0,col=scales::alpha('black',chla.coefs$alpha[1:6]))
-mtext(var.names[2],side=2,outer=F,line=1,cex=1)
+mtext(var.names.short[2],side=2,outer=F,line=1,cex=1)
 axis(2,lwd=0,lwd.ticks = 1,at=0,labels='')
 plot(x=NULL,xlim=c(0.5,6.5),ylim=range(c(chla.coefs$conf.low,chla.coefs$conf.high)),bty='o',yaxt='n',xaxt='n')
 rect(par('usr')[1],par('usr')[3],par('usr')[2],par('usr')[4],col = alpha(gly.cols[4],0.2), border = NA)
@@ -553,7 +552,7 @@ rect(par('usr')[1],par('usr')[3],par('usr')[2],par('usr')[4],col = alpha(gly.col
 abline(h=0,col=1);abline(v=c(1.5,4.5),lty=3)
 points(x=1:6,y=zoo.coefs$estimate[1:6],pch=16,col=scales::alpha('black',zoo.coefs$alpha[1:6]))
 arrows(x0=1:6,y0=zoo.coefs$conf.low[1:6],y1=zoo.coefs$conf.high[1:6],length=0,col=scales::alpha('black',zoo.coefs$alpha[1:6]))
-mtext(var.names[3],side=2,outer=F,line=1,cex=1)
+mtext(var.names.short[3],side=2,outer=F,line=1,cex=1)
 axis(2,lwd=0,lwd.ticks = 1,at=0,labels='')
 plot(x=NULL,xlim=c(0.5,6.5),ylim=range(c(zoo.coefs$conf.low,zoo.coefs$conf.high)),bty='o',yaxt='n',xaxt='n')
 rect(par('usr')[1],par('usr')[3],par('usr')[2],par('usr')[4],col = alpha(gly.cols[4],0.2), border = NA)
@@ -590,7 +589,7 @@ rect(par('usr')[1],par('usr')[3],par('usr')[2],par('usr')[4],col = alpha(gly.col
 abline(h=0,col=1);abline(v=c(1.5,4.5),lty=3)
 points(x=1:6,y=use.coefs$estimate[1:6],pch=16,col=scales::alpha('black',use.coefs$alpha[1:6]))
 arrows(x0=1:6,y0=use.coefs$conf.low[1:6],y1=use.coefs$conf.high[1:6],length=0,col=scales::alpha('black',use.coefs$alpha[1:6]))
-mtext(var.names[4],side=2,outer=F,line=1,cex=1)
+mtext(var.names.short[4],side=2,outer=F,line=1,cex=1)
 axis(2,lwd=0,lwd.ticks = 1,at=0,labels='')
 plot(x=NULL,xlim=c(0.5,6.5),ylim=range(c(use.coefs$conf.low,use.coefs$conf.high)),bty='o',yaxt='n',xaxt='n')
 rect(par('usr')[1],par('usr')[3],par('usr')[2],par('usr')[4],col = alpha(gly.cols[4],0.2), border = NA)
@@ -627,7 +626,7 @@ rect(par('usr')[1],par('usr')[3],par('usr')[2],par('usr')[4],col = alpha(gly.col
 abline(h=0,col=1);abline(v=c(1.5,4.5),lty=3)
 points(x=1:6,y=nep.coefs$estimate[1:6],pch=16,col=scales::alpha('black',nep.coefs$alpha[1:6]))
 arrows(x0=1:6,y0=nep.coefs$conf.low[1:6],y1=nep.coefs$conf.high[1:6],length=0,col=scales::alpha('black',nep.coefs$alpha[1:6]))
-mtext(var.names[5],side=2,outer=F,line=1,cex=1)
+mtext(var.names.short[5],side=2,outer=F,line=1,cex=1)
 axis(2,lwd=0,lwd.ticks = 1,at=0,labels='')
 plot(x=NULL,xlim=c(0.5,6.5),ylim=range(c(nep.coefs$conf.low,nep.coefs$conf.high)),bty='o',yaxt='n',xaxt='n')
 rect(par('usr')[1],par('usr')[3],par('usr')[2],par('usr')[4],col = alpha(gly.cols[4],0.2), border = NA)
@@ -665,7 +664,7 @@ rect(par('usr')[1],par('usr')[3],par('usr')[2],par('usr')[4],col = alpha(gly.col
 abline(h=0,col=1);abline(v=c(1.5,4.5),lty=3)
 points(x=1:6,y=rue.coefs$estimate[1:6],pch=16,col=scales::alpha('black',rue.coefs$alpha[1:6]))
 arrows(x0=1:6,y0=rue.coefs$conf.low[1:6],y1=rue.coefs$conf.high[1:6],length=0,col=scales::alpha('black',rue.coefs$alpha[1:6]))
-mtext(var.names[6],side=2,outer=F,line=1,cex=1)
+mtext(var.names.short[6],side=2,outer=F,line=1,cex=1)
 axis(2,lwd=0,lwd.ticks = 1,at=0,labels='')
 plot(x=NULL,xlim=c(0.5,6.5),ylim=range(c(rue.coefs$conf.low,rue.coefs$conf.high)),bty='o',yaxt='n',xaxt='n')
 axis(1,lwd=0,lwd.ticks = 1)
@@ -708,87 +707,180 @@ dev.off()
 # 
 # use.m <- gam(use ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
 # nep.m <- gam(log10p(NEP) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
-# rue.m <- gam(log10(RUE) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+# rue.m <- gam(log10(RUE) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, subset=is.finite(log10(RUE)), method = 'REML')
 
 load('~/Google Drive/Recherche/LEAP Postdoc/2016/GAMMs.RData')
 
 #### Figure 5: GAMM summary ####
 
-sdcdcs
+#broom
+#stargazer
+#pixiedust
 
-gamtabs(ba.m)
+# stargazer(ba.m, type='html', out='~/Desktop/S3.html')
+# gamtab
+# 
+# save_html(gamtabs(ba.m), file='~/Desktop/S3.html')
 
+gam.plot <- function(model.name, varname, xticks=F){
+  fitted <- as.data.frame(predict(model.name, se.fit = T,exclude='s(date,site.f)'))
+  fitted$lwr <- fitted$fit - 2*fitted$se.fit
+  fitted$upr <- fitted$fit + 2*fitted$se.fit
+  ylims <- range(c(fitted$lwr,fitted$upr))
+  ylims[2] <- ylims[2] * 1.11 #for a few gamms, CI extends outside for some reason
+  if(xticks == T){
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='o',legend_plot_all = F, h0=NA,ylim = ylims,lwd=2,yaxt='n', xaxt='n')
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0.5,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=gly.cols[5],add=T,print.summary = F,lwd=2)
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=1,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=gly.cols[8],add=T,print.summary = F,lwd=2)
+    mtext(varname,2,line=2.5)
+    axis(2, cex.axis=0.8, lwd=0, lwd.ticks = 1, at = seq(from=par('usr')[3],to=par('usr')[4],length.out = 9)[c(2,4,6,8)], labels = round(seq(from=par('usr')[3],to=par('usr')[4],length.out = 9)[c(2,4,6,8)],1))
+    axis(1, cex.axis=0.8, lwd=0, lwd.ticks = 1)
+    abline(v=pulse.dates[1:2],lty=3)
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='o',legend_plot_all = F, h0=NA,ylim = ylims,lwd=2,yaxt='n', xaxt='n')
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0.5,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=gly.cols[5],add=T,print.summary = F,lwd=2)
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=1,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=gly.cols[8],add=T,print.summary = F,lwd=2)
+    abline(v=pulse.dates[1:2],lty=3)
+    axis(1, cex.axis=0.8, lwd=0, lwd.ticks = 1)
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='o',legend_plot_all = F, h0=NA,ylim = ylims,lwd=2,yaxt='n', xaxt='n')
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0.5,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=imi.cols[5],add=T,print.summary = F,lwd=2)
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=1,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=imi.cols[8],add=T,print.summary = F,lwd=2)
+    axis(1, cex.axis=0.8, lwd=0, lwd.ticks = 1)
+    abline(v=pulse.dates[1:2],lty=3)
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='o',legend_plot_all = F, h0=NA,ylim = ylims,lwd=2,yaxt='n', xaxt='n')
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0.5,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=imi.cols[5],add=T,print.summary = F,lwd=2)
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=1,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=imi.cols[8],add=T,print.summary = F,lwd=2)
+    axis(1, cex.axis=0.8, lwd=0, lwd.ticks = 1)
+    abline(v=pulse.dates[1:2],lty=3)
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='o',legend_plot_all = F, h0=NA,ylim = ylims,lwd=2,yaxt='n', xaxt='n')
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0.5,'sc.imi'=0.5,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=both.cols[5],add=T,print.summary = F,lwd=2)
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=1,'sc.imi'=1,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=both.cols[8],add=T,print.summary = F,lwd=2)
+    axis(1, cex.axis=0.8, lwd=0, lwd.ticks = 1)
+    abline(v=pulse.dates[1:2],lty=3)
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='o',legend_plot_all = F, h0=NA,ylim = ylims,lwd=2,yaxt='n', xaxt='n')
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0.5,'sc.imi'=0.5,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=both.cols[5],add=T,print.summary = F,lwd=2)
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=1,'sc.imi'=1,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=both.cols[8],add=T,print.summary = F,lwd=2)
+    axis(1, cex.axis=0.8, lwd=0, lwd.ticks = 1)
+    abline(v=pulse.dates[1:2],lty=3)
+  }else{
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='o',legend_plot_all = F, h0=NA,ylim = ylims,lwd=2,yaxt='n', xaxt='n')
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0.5,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=gly.cols[5],add=T,print.summary = F,lwd=2)
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=1,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=gly.cols[8],add=T,print.summary = F,lwd=2)
+    mtext(varname,2,line=2.5)
+    axis(2, cex.axis=0.8, lwd=0, lwd.ticks = 1, at = seq(from=par('usr')[3],to=par('usr')[4],length.out = 9)[c(2,4,6,8)], labels = round(seq(from=par('usr')[3],to=par('usr')[4],length.out = 9)[c(2,4,6,8)],1))
+    abline(v=pulse.dates[1:2],lty=3)
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='o',legend_plot_all = F, h0=NA,ylim = ylims,lwd=2,yaxt='n', xaxt='n')
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0.5,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=gly.cols[5],add=T,print.summary = F,lwd=2)
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=1,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=gly.cols[8],add=T,print.summary = F,lwd=2)
+    abline(v=pulse.dates[1:2],lty=3)
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='o',legend_plot_all = F, h0=NA,ylim = ylims,lwd=2,yaxt='n', xaxt='n')
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0.5,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=imi.cols[5],add=T,print.summary = F,lwd=2)
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=1,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=imi.cols[8],add=T,print.summary = F,lwd=2)
+    abline(v=pulse.dates[1:2],lty=3)
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='o',legend_plot_all = F, h0=NA,ylim = ylims,lwd=2,yaxt='n', xaxt='n')
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0.5,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=imi.cols[5],add=T,print.summary = F,lwd=2)
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=1,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=imi.cols[8],add=T,print.summary = F,lwd=2)
+    abline(v=pulse.dates[1:2],lty=3)
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='o',legend_plot_all = F, h0=NA,ylim = ylims,lwd=2,yaxt='n', xaxt='n')
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0.5,'sc.imi'=0.5,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=both.cols[5],add=T,print.summary = F,lwd=2)
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=1,'sc.imi'=1,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=both.cols[8],add=T,print.summary = F,lwd=2)
+    abline(v=pulse.dates[1:2],lty=3)
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col='gray50',print.summary = F,hide.label = T,cex.axis=1,ann=F,bty='o',legend_plot_all = F, h0=NA,ylim = ylims,lwd=2,yaxt='n', xaxt='n')
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=0.5,'sc.imi'=0.5,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=both.cols[5],add=T,print.summary = F,lwd=2)
+    plot_smooth(model.name, view="date", cond=list('sc.gly'=1,'sc.imi'=1,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=both.cols[8],add=T,print.summary = F,lwd=2)
+    abline(v=pulse.dates[1:2],lty=3)
+  }
+}
 
-#### Figure S3-S4: contour plots ###
+pdf('~/Desktop/Fig5.pdf',width=6.5,height=6.5,pointsize = 12)
 
-fvdfv
+par(mfrow=c(6,6),mar=c(0.1,0.1,0.1,0.1),oma=c(4,4,2,0.5),cex=1)
+gam.plot(model.name=ba.m, varname=var.names.short[1])
+gam.plot(model.name=chla.m, varname=var.names.short[2])
+gam.plot(model.name=zoo.m, varname=var.names.short[3])
+gam.plot(model.name=use.m, varname=var.names.short[4])
+gam.plot(model.name=nep.m, varname=var.names.short[5])
+gam.plot(model.name=rue.m, varname=var.names.short[6], xticks=T)
+mtext('date',1,outer=T,line=2.5)
+mtext(rep(c('low nut.','high nut.'),3),side=3,outer=T,line=0.1,at=seq(0.09,0.92,length.out = 6),adj=0.5)
 
-#### Figures S5-S10: scatterplots with GAMM fit ####
+dev.off()
 
-pdf('~/Desktop/scatterplots.pdf',width=5.5,height = 3,pointsize = 8,onefile = T)
-par(mfrow=c(3,6),mar=c(0.1,0.1,0.1,0.1),oma=c(4,4,2,0.5),cex=1,xpd=T)
-pchs.2 <- c(16,15)
+#### Supp Figures: contour plots ####
 
-for(v in 1:length(vars)){
-  tmp <- plot.data[,c(colnames(plot.data)[1:13],vars[v])]
+heat.cols <- viridis(50)
+
+cont.plot <- function(model.name,varname){
+  zlims <- range( fitted <- as.data.frame(predict(model.name, se.fit = F,exclude='s(date,site.f)')))
+  for(nut.lvl in c('low','high')){
+    for(date.x in Sampling.dates){
+      fvisgam(model.name, view = c('sc.gly','sc.imi'), too.far=0.3,cond = list('date' = date.x, 'o.nut' = nut.lvl), zlim=zlims, add.color.legend=F,hide.label=T,plot.type = 'contour', lwd=1.5,color = heat.cols, main = NULL,rm.ranef = T,print.summary = F,yaxt='n',xaxt='n',xlab=NULL,ylab=NULL)
+    }
+  }
+  mtext('glyphosate',1,outer=T,line=0.5)
+  mtext('imidacloprid',2,outer=T,line=0.5)
+  mtext(paste('day',Sampling.dates,' '),side=3,outer=T,line=0.3,at=seq(0.09,0.92,length.out = 6),adj=0.5)
+  mtext(c('low nut.','high nut.'),side=4,outer=T,line=0.5,at=c(0.75,0.25))
+  mtext(varname,side=3,outer=T,line=1.5,adj=0.5,cex=1.1)
+}
+
+pdf('~/Desktop/contourplots.pdf',width=6.5,height=2.8,pointsize = 10,onefile = T)
+par(mfrow=c(2,6),mar=c(0.1,0.1,0.1,0.1),oma=c(2,2,3.5,2),cex=1,xpd=T)
+cont.plot(model.name=ba.m, varname=var.names[1])
+cont.plot(model.name=chla.m, varname=var.names[2])
+cont.plot(model.name=zoo.m, varname=var.names[3])
+cont.plot(model.name=use.m, varname=var.names[4])
+cont.plot(model.name=nep.m, varname=var.names[5])
+cont.plot(model.name=rue.m, varname=var.names[6])
+dev.off()
+
+#### Supp Figures: scatterplots with GAMM fit ####
+
+scattergam <- function(var, varname, model.name){
+  tmp <- plot.data[,c(colnames(plot.data)[1:13],var)]
   tmp <- drop_na(tmp)
   tmp <- filter(tmp, is.finite(tmp[,14]))
   ylims <- range(tmp[,14])
   for(letter in c('C|D','E|H','J|K')){
     for(date.x in Sampling.dates){
       sub <- tmp %>% filter(date == date.x, str_detect(site, letter))
-      sub$pesticide <- as.numeric(str_remove(sub$site, letter))
+      sub$pesticide <- rescale(as.numeric(str_remove(sub$site, letter)),c(0,1))
       if(date.x == 1 & letter == 'J|K'){
-        plot(y=sub[,14],x=sub[,15],xlab=NULL,ylab=NULL,bty='o',type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=allcols[sub$pond.id])
+        plot(y=sub[,14],x=sub[,15],xlab=NULL,ylab=NULL,bty='o',type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=1,bg=allcols[sub$pond.id])
       }else if(date.x == 1 & letter != 'J|K'){
-        plot(y=sub[,14],x=sub[,15],xlab=NULL,ylab=NULL,bty='o',type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=allcols[sub$pond.id],xaxt='n')
+        plot(y=sub[,14],x=sub[,15],xlab=NULL,ylab=NULL,bty='o',type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=1,bg=allcols[sub$pond.id],xaxt='n')
       }else if(date.x != 1 & letter == 'J|K'){
-        plot(y=sub[,14],x=sub[,15],xlab=NULL,ylab=NULL,bty='o',type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=allcols[sub$pond.id],yaxt='n')
+        plot(y=sub[,14],x=sub[,15],xlab=NULL,ylab=NULL,bty='o',type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=1,bg=allcols[sub$pond.id],yaxt='n')
       }else{
-        plot(y=sub[,14],x=sub[,15],xlab=NULL,ylab=NULL,bty='o',type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=allcols[sub$pond.id],yaxt='n',xaxt='n')
+        plot(y=sub[,14],x=sub[,15],xlab=NULL,ylab=NULL,bty='o',type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=1,bg=allcols[sub$pond.id],yaxt='n',xaxt='n')
       }
-      #   sub.low <- filter(sub, nut==1)
-      #   lines(predict(loess(sub.low[,14]~sub.low[,15])), col=alpha(1,0.5), lwd=1.5,lty=1)
-      #   sub.high <- filter(sub, nut==2)
-      #   lines(predict(loess(sub.high[,14]~sub.high[,15])), col=alpha(1,0.5), lwd=1.5,lty=2)
+      if(letter == 'C|D'){
+        plot_smooth(model.name, view="sc.gly", cond=list('date'=date.x,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=alpha(gly.cols[8],0.7),lty=1,add=T,print.summary = F)
+        plot_smooth(model.name, view="sc.gly", cond=list('date'=date.x,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=alpha(gly.cols[8],0.7),lty=2,lwd=1.5,add=T,print.summary = F)
+      }else if(letter == 'E|H'){
+        plot_smooth(model.name, view="sc.imi", cond=list('date'=date.x,'sc.gly'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=alpha(imi.cols[8],0.7),lty=1,add=T,print.summary = F)
+        plot_smooth(model.name, view="sc.imi", cond=list('date'=date.x,'sc.gly'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=alpha(imi.cols[8],0.7),lty=2,lwd=1.5,add=T,print.summary = F)
+      }else{
+        fitted <- as.data.frame(predict.gam(model.name, newdata = list('date' = rep(date.x,200), 'sc.gly' = rep(seq(0,1,length.out=100),2), 'sc.imi' = rep(seq(0,1,length.out=100),2), 'o.nut' = c(rep('low',100),rep('high',100)), 'site.f' = rep('C1',200)), exclude = s(date,site.f), se.fit = T))
+        fitted$lwr <- fitted$fit - 1.96*fitted$se.fit
+        fitted$upr <- fitted$fit + 1.96*fitted$se.fit
+        poly(x=seq(0,1,length.out=100),upper=fitted$upr[1:100],lower=fitted$lwr[1:100],fill=alpha(both.cols[8],0.1))
+        points(fitted$fit[1:100]~seq(0,1,length.out=100),type='l',col=alpha(both.cols[8],0.7),lty=1)
+        poly(x=seq(0,1,length.out=100),upper=fitted$upr[101:200],lower=fitted$lwr[101:200],fill=alpha(both.cols[8],0.1))
+        points(fitted$fit[101:200]~seq(0,1,length.out=100),type='l',col=alpha(both.cols[8],0.7),lty=2,lwd=1.5)
+      }
     }
   }
-  mtext(var.names[v],side=2,outer=T,line=2.5,cex=1.2)
-  mtext('nominal pesticide concentration (dose 1 to 8)',side=1,outer=T,line=2.5,cex=1.2)
+  mtext(varname,side=2,outer=T,line=2.5,cex=1.2)
+  mtext('pesticide nominal concentration (dose 1 to 8)',side=1,outer=T,line=2.5,cex=1.2)
   mtext(paste('day',Sampling.dates,' '),side=3,outer=T,line=0.1,at=seq(0.1,0.93,length.out = 6),adj=0.5)
 }
 
+pdf('~/Desktop/FigS5-10_scattergams.pdf',width=5.5,height = 3,pointsize = 8,onefile = T)
+par(mfrow=c(3,6),mar=c(0.1,0.1,0.1,0.1),oma=c(4,4,2,0.5),cex=1,xpd=T)
+scattergam(var=vars[1],model.name=ba.m, varname=var.names[1])
+scattergam(var=vars[2],model.name=chla.m, varname=var.names[2])
+scattergam(var=vars[3],model.name=zoo.m, varname=var.names[3])
+scattergam(var=vars[4],model.name=use.m, varname=var.names[4])
+scattergam(var=vars[5],model.name=nep.m, varname=var.names[5])
+scattergam(var=vars[6],model.name=rue.m, varname=var.names[6])
 dev.off()
-
-
-scattergam <- function(var, varname, model.name, xticks=F){
-  tmp <- plot.data[,c(colnames(plot.data)[1:13],var)]
-  tmp <- drop_na(tmp)
-  tmp <- filter(tmp, is.finite(tmp[,14]))
-  ylims <- range(tmp[,14])
-  for(date.x in Sampling.dates){
-    sub <- tmp %>% filter(date == date.x)
-    sub$pesticide <- rescale(as.numeric(str_remove(sub$site, 'C|D|E|H|J|K')),c(0,1))
-    if(date.x == 1 & xticks==T){
-      plot(y=sub[,14],x=sub[,15],bty='o',xlim=c(-0.05,1.05),type='p',ylim=ylims,pch=pchs[sub$nut.num],col=allcols[sub$pond.id],xlab=NULL,ylab=NULL, xaxt='n')
-      mtext(varname,side=2,outer=F,line=2.5,cex=1.1)
-      axis(1,at=rescale(1:8,c(0,1)),labels=1:8,lwd=0,lwd.ticks = 1)
-    }else if(date.x == 1 & xticks==F){
-      plot(y=sub[,14],x=sub[,15],bty='o',xlim=c(-0.05,1.05),type='p',ylim=ylims,pch=pchs[sub$nut.num],col=allcols[sub$pond.id],xlab=NULL,ylab=NULL, xaxt='n')
-      mtext(varname,side=2,outer=F,line=2.5,cex=1.1)
-    }else if(date.x != 1 & xticks==T){
-      plot(y=sub[,14],x=sub[,15],bty='o',xlim=c(-0.05,1.05),type='p',ylim=ylims,pch=pchs[sub$nut.num],col=allcols[sub$pond.id],xlab=NULL,ylab=NULL,yaxt='n', xaxt='n')
-      axis(1,at=rescale(1:8,c(0,1)),labels=1:8,lwd=0,lwd.ticks = 1)
-    }else{
-      plot(y=sub[,14],x=sub[,15],bty='o',xlim=c(-0.05,1.05),type='p',ylim=ylims,pch=pchs[sub$nut.num],col=allcols[sub$pond.id],xlab=NULL,ylab=NULL,yaxt='n',xaxt='n')
-    }
-    plot_smooth(model.name, view="sc.gly", cond=list('date'=date.x,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=alpha(gly.cols[8],0.7),lty=1,add=T,print.summary = F,se=0)
-    plot_smooth(model.name, view="sc.gly", cond=list('date'=date.x,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=alpha(gly.cols[8],0.7),lty=2,lwd=1.5,add=T,print.summary = F,se=0)
-    plot_smooth(model.name, view="sc.imi", cond=list('date'=date.x,'sc.gly'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=alpha(imi.cols[8],0.7),lty=1,add=T,print.summary = F,se=0)
-    plot_smooth(model.name, view="sc.imi", cond=list('date'=date.x,'sc.gly'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=alpha(imi.cols[8],0.7),lty=2,lwd=1.5,add=T,print.summary = F,se=0)
-    fitvals <- predict.gam(model.name, newdata = list('date' = rep(date.x,200), 'sc.gly' = rep(seq(0,1,length.out=100),2), 'sc.imi' = rep(seq(0,1,length.out=100),2), 'o.nut' = c(rep('low',100),rep('high',100)), 'site.f' = rep('C1',200)), exclude = s(date,site.f))
-    points(fitvals[1:100]~seq(0,1,length.out=100),type='l',col=alpha(both.cols[8],0.7),lty=1)  
-    points(fitvals[101:200]~seq(0,1,length.out=100),type='l',col=alpha(both.cols[8],0.7),lty=2,lwd=1.5)  
-  }
-}
-
