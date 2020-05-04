@@ -116,10 +116,153 @@ nep.m <- gam(log10p(NEP) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date
 rue.m <- gam(log10(RUE) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, subset=is.finite(log(RUE)), method = 'REML')
 diatoms.m <- gam(log10p(diatoms) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
 prop.diatoms.m <- gam((diatoms/total) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML', family=betar)
+ 
+save(ba.m,chla.m,zoo.m,use.m,nep.m,rue.m,diatoms.m,prop.diatoms.m, file='~/Google Drive/Recherche/LEAP Postdoc/2016/GAMMs.RData')
 
-save(ba.m,chla.m,zoo.m,use.m,nep.m,rue.m,diatoms.m,prop.diatoms.m, file='~/Desktop/GAMMS.RData')
+##### tweaking k's to better capture data, as shows on scattergams ####
 
-###### a simple visualization of gamms ####
+ba.m <- gam(log10(BA) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+ba.m2 <- gam(log10(BA) ~ o.nut + ti(date,k=4) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=4) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+ba.m3 <- gam(log10(BA) ~ o.nut + ti(date,k=3) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=5) + ti(date,sc.gly,sc.imi, k=4) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+ba.m4 <- gam(log10(BA) ~ o.nut + ti(date,k=3) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=6) + ti(date,sc.gly,sc.imi, k=4) + ti(date,sc.gly,sc.imi, by = o.nut, k=4) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+ba.m5 <- gam(log10(BA) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=5) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=4) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+ba.m6 <- gam(log10(BA) ~ o.nut + ti(date,k=6) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=6) + ti(date,sc.gly,sc.imi, k=4) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+
+compare_performance(ba.m,ba.m2,ba.m3,ba.m4,ba.m5,ba.m6)
+scattergam(var=vars[1],model.name=ba.m, varname=var.names[1])
+scattergam(var=vars[1],model.name=ba.m2, varname=var.names[1])
+scattergam(var=vars[1],model.name=ba.m3, varname=var.names[1])
+scattergam(var=vars[1],model.name=ba.m4, varname=var.names[1])
+scattergam(var=vars[1],model.name=ba.m5, varname=var.names[1])
+scattergam(var=vars[1],model.name=ba.m6, varname=var.names[1])
+
+ba.m6 -> ba.m
+
+chla.m <- gam(log10(total) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+chla.m2 <- gam(log10(total) ~ o.nut + ti(date,k=6) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=6) + ti(date,sc.imi, k=4) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+chla.m3 <- gam(log10(total) ~ o.nut + ti(date,k=6) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=6) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=4) + ti(date,sc.gly,sc.imi, by = o.nut, k=4) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+compare_performance(chla.m,chla.m2,chla.m3)
+scattergam(var=vars[2],model.name=chla.m, varname=var.names[2])
+scattergam(var=vars[2],model.name=chla.m2, varname=var.names[2])
+scattergam(var=vars[2],model.name=chla.m3, varname=var.names[2])
+
+chla.m3 -> chla.m
+
+zoo.m <- gam(log10p(total_zoo) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+zoo.m2 <- gam(log10p(total_zoo) ~ o.nut + ti(date,k=6) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=6) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=4) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+zoo.m3 <- gam(log10p(total_zoo) ~ o.nut + ti(date,k=6) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+zoo.m4 <- gam(log10p(total_zoo) ~ o.nut + ti(date,k=3) + ti(date,sc.gly, k=3) + ti(date,sc.imi, k=3) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=6) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+compare_performance(zoo.m,zoo.m2,zoo.m3,zoo.m4)
+scattergam(var=vars[3],model.name=zoo.m, varname=var.names[3])
+scattergam(var=vars[3],model.name=zoo.m2, varname=var.names[3])
+scattergam(var=vars[3],model.name=zoo.m3, varname=var.names[3])
+scattergam(var=vars[3],model.name=zoo.m4, varname=var.names[3])
+
+zoo.m3 -> zoo.m
+
+use.m <- gam(use ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+use.m2 <- gam(use ~ o.nut + ti(date,k=6) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+use.m3 <- gam(use ~ o.nut + ti(date,k=6) + ti(date,sc.gly, k=5) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=5) + ti(date,sc.imi, by = o.nut, k=4) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=4) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+compare_performance(use.m,use.m2,use.m3)
+scattergam(var=vars[4],model.name=use.m, varname=var.names[4])
+scattergam(var=vars[4],model.name=use.m2, varname=var.names[4])
+scattergam(var=vars[4],model.name=use.m3, varname=var.names[4])
+
+use.m3 -> use.m
+
+nep.m <- gam(log10p(NEP) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+nep.m2 <- gam(log10p(NEP) ~ o.nut + ti(date,k=6) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+nep.m3 <- gam(log10p(NEP) ~ o.nut + ti(date,k=6) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=6) + ti(date,sc.imi, k=3) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=3) + ti(date,sc.gly,sc.imi, by = o.nut, k=5) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+compare_performance(nep.m,nep.m2,nep.m3)
+scattergam(var=vars[5],model.name=nep.m, varname=var.names[5])
+scattergam(var=vars[5],model.name=nep.m2, varname=var.names[5])
+scattergam(var=vars[5],model.name=nep.m3, varname=var.names[5])
+
+nep.m3 -> nep.m
+
+rue.m <- gam(log10(RUE) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, subset=is.finite(log(RUE)), method = 'REML')
+rue.m2 <- gam(log10(RUE) ~ o.nut + ti(date,k=6) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, subset=is.finite(log(RUE)), method = 'REML')
+rue.m3 <- gam(log10(RUE) ~ o.nut + ti(date,k=6) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=6) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=5) + ti(date,sc.gly,sc.imi, k=6) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='re',k=2), data=merged.data, subset=is.finite(log(RUE)), method = 'REML')
+compare_performance(rue.m,rue.m2,rue.m3)
+scattergam(var=vars[6],model.name=rue.m, varname=var.names[6])
+scattergam(var=vars[6],model.name=rue.m2, varname=var.names[6])
+scattergam(var=vars[6],model.name=rue.m3, varname=var.names[6])
+
+rue.m2 -> rue.m
+
+save(ba.m,chla.m,zoo.m,use.m,nep.m,rue.m,file='~/Google Drive/Recherche/LEAP Postdoc/2016/GAMMs.RData')
+
+#### scattergams 3 rows ####
+
+vars <- c('BA','total','total_zoo','use','NEP','RUE')
+
+var.names <- c(expression(log[10]~bact.~(cells/mu*L)),
+               expression(log[10]~chl.~italic(a)~(mu*g/L)),
+               expression(log[10](1+zoo)~(mu*g/L)),
+               expression(subtrates~used~by~bact.),
+               expression(log[10]~(1+Delta*DO)~(mu*g/L)),
+               expression(log[10]~(Zoo:Phyto)~(mu*g/mu*g)))
+
+pchs.2 <- c(21,22)
+
+plot.data <- select(merged.data, date:date.f, vars)
+plot.data <- plot.data %>% mutate_at(vars(BA,total,RUE), log10)
+plot.data <- plot.data %>% mutate_at(vars(total_zoo,NEP), log10p)
+
+scattergam <- function(var, varname, model.name){
+tmp <- plot.data[,c(colnames(plot.data)[1:13],var)]
+tmp <- drop_na(tmp)
+tmp <- filter(tmp, is.finite(tmp[,14]))
+ylims <- range(tmp[,14])
+for(letter in c('C|D','E|H','J|K')){
+  for(date.x in Sampling.dates){
+    sub <- tmp %>% filter(date == date.x, str_detect(site, letter))
+    sub$pesticide <- rescale(as.numeric(str_remove(sub$site, letter)),c(0,1))
+    if(date.x == 1 & letter == 'J|K'){
+      plot(y=sub[,14],x=sub[,15],xlab=NULL,ylab=NULL,bty='o',type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=1,bg=allcols[sub$pond.id],xaxt='n')
+      axis(1, lwd=0, lwd.ticks = 1, at = seq(0,1,length.out = 8), labels=1:8)
+    }else if(date.x == 1 & letter != 'J|K'){
+      plot(y=sub[,14],x=sub[,15],xlab=NULL,ylab=NULL,bty='o',type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=1,bg=allcols[sub$pond.id],xaxt='n')
+    }else if(date.x != 1 & letter == 'J|K'){
+      plot(y=sub[,14],x=sub[,15],xlab=NULL,ylab=NULL,bty='o',type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=1,bg=allcols[sub$pond.id],yaxt='n',xaxt='n')
+      axis(1, lwd=0, lwd.ticks = 1, at = seq(0,1,length.out = 8), labels=1:8)
+    }else{
+      plot(y=sub[,14],x=sub[,15],xlab=NULL,ylab=NULL,bty='o',type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=1,bg=allcols[sub$pond.id],yaxt='n',xaxt='n')
+    }
+    if(letter == 'C|D'){
+      plot_smooth(model.name, view="sc.gly", cond=list('date'=date.x,'sc.imi'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=alpha(gly.cols[8],0.7),lty=1,add=T,print.summary = F)
+      plot_smooth(model.name, view="sc.gly", cond=list('date'=date.x,'sc.imi'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=alpha(gly.cols[8],0.7),lty=2,lwd=1.5,add=T,print.summary = F)
+    }else if(letter == 'E|H'){
+      plot_smooth(model.name, view="sc.imi", cond=list('date'=date.x,'sc.gly'=0,'o.nut'='low'), rm.ranef=TRUE, rug=F,col=alpha(imi.cols[8],0.7),lty=1,add=T,print.summary = F)
+      plot_smooth(model.name, view="sc.imi", cond=list('date'=date.x,'sc.gly'=0,'o.nut'='high'), rm.ranef=TRUE, rug=F,col=alpha(imi.cols[8],0.7),lty=2,lwd=1.5,add=T,print.summary = F)
+    }else{
+      fitted <- as.data.frame(predict.gam(model.name, newdata = list('date' = rep(date.x,200), 'sc.gly' = rep(seq(0,1,length.out=100),2), 'sc.imi' = rep(seq(0,1,length.out=100),2), 'o.nut' = c(rep('low',100),rep('high',100)), 'site.f' = rep('C1',200)), exclude = s(date,site.f), se.fit = T))
+      fitted$lwr <- fitted$fit - 1.96*fitted$se.fit
+      fitted$upr <- fitted$fit + 1.96*fitted$se.fit
+      poly(x=seq(0,1,length.out=100),upper=fitted$upr[1:100],lower=fitted$lwr[1:100],fill=alpha(both.cols[8],0.1))
+      points(fitted$fit[1:100]~seq(0,1,length.out=100),type='l',col=alpha(both.cols[8],0.7),lty=1)
+      poly(x=seq(0,1,length.out=100),upper=fitted$upr[101:200],lower=fitted$lwr[101:200],fill=alpha(both.cols[8],0.1))
+      points(fitted$fit[101:200]~seq(0,1,length.out=100),type='l',col=alpha(both.cols[8],0.7),lty=2,lwd=1.5)
+    }
+  }
+}
+mtext(varname,side=2,outer=T,line=2.5,cex=1.2)
+mtext('pesticide nominal concentration (dose 1 to 8)',side=1,outer=T,line=2.5,cex=1.2)
+mtext(paste('day',Sampling.dates,' '),side=3,outer=T,line=0.1,at=seq(0.1,0.93,length.out = 6),adj=0.5)
+}
+
+pdf('~/Desktop/FigS5-10_scattergams.pdf',width=5.5,height = 3,pointsize = 8,onefile = T)
+par(mfrow=c(3,6),mar=c(0.1,0.1,0.1,0.1),oma=c(4,4,2,0.5),cex=1,xpd=T)
+scattergam(var=vars[1],model.name=ba.m, varname=var.names[1])
+scattergam(var=vars[2],model.name=chla.m, varname=var.names[2])
+scattergam(var=vars[3],model.name=zoo.m, varname=var.names[3])
+scattergam(var=vars[4],model.name=use.m, varname=var.names[4])
+scattergam(var=vars[5],model.name=nep.m, varname=var.names[5])
+scattergam(var=vars[6],model.name=rue.m, varname=var.names[6])
+dev.off()
+
+
+###### ugly visualization of gamms ####
 
 VF.gam.plot <- function(model.name, varname){
   #fitted <- as.data.frame(predict(model.name))
@@ -165,7 +308,7 @@ VF.gam.plot(model.name=rue.m, varname=expression(log[10]~RUE~(mu*g/mu*g)))
 mtext('date',1,outer=T,line=0.5)
 dev.off()
 
-#### only max vs. min ####
+#### only max vs. min: see main code for final version of this ####
 
 VF.gam.plot.simpler <- function(model.name, varname){
   fitted <- as.data.frame(predict(model.name, se.fit = T,exclude='s(date,site.f)'))
