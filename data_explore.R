@@ -204,6 +204,41 @@ for(v in 1:length(vars)){
 
 dev.off()
 
+#### Scatterplots all in one panel ####
+
+scatterplot.array <- function(var, varname, xticks=F){
+  tmp <- plot.data[,c(colnames(plot.data)[1:13],var)]
+  tmp <- drop_na(tmp)
+  tmp <- filter(tmp, is.finite(tmp[,14]))
+  ylims <- range(tmp[,14])
+  for(date.x in Sampling.dates){
+    sub <- tmp %>% filter(date == date.x)
+    sub$pesticide <- rescale(as.numeric(str_remove(sub$site, 'C|D|E|H|J|K')),c(0,1))
+    if(date.x == 1 & xticks==T){
+      plot(y=sub[,14],x=sub[,15],bty='o',xlim=c(-0.05,1.05),type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=1,bg=allcols[sub$pond.id],xlab=NULL,ylab=NULL, xaxt='n')
+      mtext(varname,side=2,outer=F,line=2.5,cex=1.1)
+      axis(1,at=rescale(1:8,c(0,1)),labels=1:8,lwd=0,lwd.ticks = 1)
+    }else if(date.x == 1 & xticks==F){
+      plot(y=sub[,14],x=sub[,15],bty='o',xlim=c(-0.05,1.05),type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=1,bg=allcols[sub$pond.id],xlab=NULL,ylab=NULL, xaxt='n')
+      mtext(varname,side=2,outer=F,line=2.5,cex=1.1)
+    }else if(date.x != 1 & xticks==T){
+      plot(y=sub[,14],x=sub[,15],bty='o',xlim=c(-0.05,1.05),type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=1,bg=allcols[sub$pond.id],xlab=NULL,ylab=NULL,yaxt='n', xaxt='n')
+      axis(1,at=rescale(1:8,c(0,1)),labels=1:8,lwd=0,lwd.ticks = 1)
+    }else{
+      plot(y=sub[,14],x=sub[,15],bty='o',xlim=c(-0.05,1.05),type='p',ylim=ylims,pch=pchs.2[sub$nut.num],col=1,bg=allcols[sub$pond.id],xlab=NULL,ylab=NULL,yaxt='n',xaxt='n')
+    }
+  }
+}
+
+pdf('~/Desktop/scatterplots.pdf',width=8.5,height = 5.5,pointsize = 10)
+par(mfrow=c(3,6),mar=c(0.1,0.1,0.1,0.1),oma=c(4,4,2,0.5),cex=1,xpd=T)
+scatterplot.array(var='BA',varname=expression(log[10]~bact.~(cells/mu*L)))
+scatterplot.array(var='total',varname=expression(log[10]~chl.~italic(a)~(mu*g/L)))
+scatterplot.array(var='total_zoo',varname=expression(log[10](1+zoo)~(mu*g/L)),xticks=T)
+mtext(paste('day',Sampling.dates,' '),side=3,outer=T,line=0.1,at=seq(0.1,0.93,length.out = 6),adj=0.5,cex=1.1)
+mtext('pesticide nominal concentration (dose 1 to 8)',side=1,outer=T,line=2.5,cex=1.1)
+dev.off()
+
 #### scatterplot arrays with gamms ####
 
 load('~/Google Drive/Recherche/LEAP Postdoc/2016/GAMMs.RData')
