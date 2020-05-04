@@ -701,13 +701,13 @@ dev.off()
 
 #### fitting GAMMs ####
 
-# ba.mo <- gam(log10(BA) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
-# chla.m <- gam(log10(total) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
-# zoo.m <- gam(log10p(total_zoo) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
-# 
-# use.m <- gam(use ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
-# nep.m <- gam(log10p(NEP) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
-# rue.m <- gam(log10(RUE) ~ o.nut + ti(date,k=5) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, subset=is.finite(log10(RUE)), method = 'REML')
+ba.m <- gam(log10(BA) ~ o.nut + ti(date,k=6) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=6) + ti(date,sc.gly,sc.imi, k=4) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+chla.m <- gam(log10(total) ~ o.nut + ti(date,k=6) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=6) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=4) + ti(date,sc.gly,sc.imi, by = o.nut, k=4) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+zoo.m <- gam(log10p(total_zoo) ~ o.nut + ti(date,k=6) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+
+use.m <- gam(use ~ o.nut + ti(date,k=6) + ti(date,sc.gly, k=5) + ti(date,sc.gly, by = o.nut, k=3) + ti(date,sc.imi, k=5) + ti(date,sc.imi, by = o.nut, k=4) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=4) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+nep.m <- gam(log10p(NEP) ~ o.nut + ti(date,k=6) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=6) + ti(date,sc.imi, k=3) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=3) + ti(date,sc.gly,sc.imi, by = o.nut, k=5) + s(date, site.f, bs='fs',k=3), data=merged.data, method = 'REML')
+rue.m <- gam(log10(RUE) ~ o.nut + ti(date,k=6) + ti(date,sc.gly, k=6) + ti(date,sc.gly, by = o.nut, k=4) + ti(date,sc.imi, k=6) + ti(date,sc.imi, by = o.nut, k=3) + ti(date,sc.gly,sc.imi, k=5) + ti(date,sc.gly,sc.imi, by = o.nut, k=3) + s(date, site.f, bs='fs',k=3), data=merged.data, subset=is.finite(log(RUE)), method = 'REML')
 
 load('~/Google Drive/Recherche/LEAP Postdoc/2016/GAMMs.RData')
 
