@@ -129,6 +129,7 @@ colnames(ZOO) <- str_replace(colnames(ZOO), 'spp', 'sp')
 colnames(ZOO) <- str_replace(colnames(ZOO), 'adulte', 'adult')
 colnames(ZOO) <- str_replace(colnames(ZOO), ' ', '_')
 colnames(ZOO) <- str_replace(colnames(ZOO), 'Trichocerca', 'Trichocerca_sp')
+colnames(ZOO)[c(12,25)] <- c('Scapholeberis_mucronata','Polyarthra_vulgaris')
 
 ZOO <- select(ZOO, -total_copepodites, -total_nauplii) #redundant
 ZOO <- select(ZOO, site:day_adj, Alona_sp:Monostyla_quadridentata,total_zoo,total_zoo_adult:total_rotifer) #redundant
@@ -162,6 +163,7 @@ biomass$Species <- str_replace(biomass$Species, 'sp\\.', 'sp')
 #colnames(ZOO)[6:31] %in% biomass$Species
 colnames(biomass) <- c('species','mass.ug')
 biomass <- as.data.frame(biomass)
+biomass$species[c(7,24)] <- c('Scapholeberis_mucronata','Polyarthra_vulgaris')
 
 #converting abundance matrix
 for(i in 6:31){
@@ -215,6 +217,10 @@ merged.data.zoo.density <- inner_join(FP,YSI, by = c('date','site')) %>%
   select(-gly.target.ppb,-imi.target.ppb,-water) %>%
   mutate(nut = as.numeric(factor(nut, levels=c('low','high')))) %>%
   select(date, site, gly:pond.id, NEP:SPC.mean, BA, AWCD:Amines_amides, greens:total, total_zoo:total_rotifer, Copepodite:Nauplii, richness:rot.evenness, Alona_sp:Monostyla_quadridentata, everything())
+
+#### cleanup ####
+
+rm(i,mass.target.sp,target.sp,plot_chull)
 
 #### output data ####
 

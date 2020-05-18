@@ -428,28 +428,32 @@ dev.off()
 
 merged.data$nut <- merged.data$nut-1
 
-ba.mod.lin <- lmer(log10(BA) ~ date.f:nut + date.f:sc.gly + date.f:sc.imi + date.f:sc.gly:sc.imi + date.f:sc.gly:nut +
-                     date.f:sc.imi:nut + (1|site.f),merged.data)
+merged.data$nut.std <- scale(merged.data$nut)
+merged.data$sc.gly.std <- scale(merged.data$sc.gly)
+merged.data$sc.imi.std <- scale(merged.data$sc.imi)
+
+ba.mod.lin <- lmer(log10(BA) ~ date.f:nut.std + date.f:sc.gly.std + date.f:sc.imi.std + date.f:sc.gly.std:sc.imi.std + date.f:sc.gly.std:nut.std +
+                     date.f:sc.imi.std:nut.std + (1|site.f),merged.data)
 ba.coefs <- get_model_data(ba.mod.lin, type = 'est')
 
-chla.mod.lin <- lmer(log10(total) ~ date.f:nut + date.f:sc.gly + date.f:sc.imi + date.f:sc.gly:sc.imi + date.f:sc.gly:nut +
-                       date.f:sc.imi:nut + (1|site.f),merged.data)
+chla.mod.lin <- lmer(log10(total) ~ date.f:nut.std + date.f:sc.gly.std + date.f:sc.imi.std + date.f:sc.gly.std:sc.imi.std + date.f:sc.gly.std:nut.std +
+                       date.f:sc.imi.std:nut.std + (1|site.f),merged.data)
 chla.coefs <- get_model_data(chla.mod.lin, type = 'est')
 
-zoo.mod.lin <- lmer(log10p(total_zoo) ~ date.f:nut + date.f:sc.gly + date.f:sc.imi + date.f:sc.gly:sc.imi + date.f:sc.gly:nut +
-                      date.f:sc.imi:nut + (1|site.f),merged.data)
+zoo.mod.lin <- lmer(log10p(total_zoo) ~ date.f:nut.std + date.f:sc.gly.std + date.f:sc.imi.std + date.f:sc.gly.std:sc.imi.std + date.f:sc.gly.std:nut.std +
+                      date.f:sc.imi.std:nut.std + (1|site.f),merged.data)
 zoo.coefs <- get_model_data(zoo.mod.lin, type = 'est')
 
-EP.mod.lin <- lmer(use ~ date.f:nut + date.f:sc.gly + date.f:sc.imi + date.f:sc.gly:sc.imi + date.f:sc.gly:nut +
-                     date.f:sc.imi:nut + (1|site.f),merged.data)
+EP.mod.lin <- lmer(use ~ date.f:nut.std + date.f:sc.gly.std + date.f:sc.imi.std + date.f:sc.gly.std:sc.imi.std + date.f:sc.gly.std:nut.std +
+                     date.f:sc.imi.std:nut.std + (1|site.f),merged.data)
 use.coefs <- get_model_data(EP.mod.lin, type = 'est')
 
-nep.mod.lin <- lmer(log10p(NEP) ~ date.f:nut + date.f:sc.gly + date.f:sc.imi + date.f:sc.gly:sc.imi + date.f:sc.gly:nut +
-                      date.f:sc.imi:nut + (1|site.f),merged.data)
+nep.mod.lin <- lmer(log10p(NEP) ~ date.f:nut.std + date.f:sc.gly.std + date.f:sc.imi.std + date.f:sc.gly.std:sc.imi.std + date.f:sc.gly.std:nut.std +
+                      date.f:sc.imi.std:nut.std + (1|site.f),merged.data)
 nep.coefs <- get_model_data(nep.mod.lin, type = 'est')
 
-rue.mod.lin <- lmer(log10(RUE) ~ date.f:nut + date.f:sc.gly + date.f:sc.imi + date.f:sc.gly:sc.imi + date.f:sc.gly:nut +
-                      date.f:sc.imi:nut + (1|site.f),merged.data,subset=is.finite(log10(RUE)))
+rue.mod.lin <- lmer(log10(RUE) ~ date.f:nut.std + date.f:sc.gly.std + date.f:sc.imi.std + date.f:sc.gly.std:sc.imi.std + date.f:sc.gly.std:nut.std +
+                      date.f:sc.imi.std:nut.std + (1|site.f),merged.data,subset=is.finite(log10(RUE)))
 rue.coefs <- get_model_data(rue.mod.lin, type = 'est')
 
 tab_model(ba.mod.lin,chla.mod.lin,zoo.mod.lin, dv.labels = c('bacterial abundance','chlorophyll a','zooplankton biomass'), file='~/Desktop/TableS1.doc')
