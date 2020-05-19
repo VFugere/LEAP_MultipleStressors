@@ -308,7 +308,8 @@ hobodat <- left_join(hobodat, treat, by = 'site')
 for(letter in c('C|D','E|H','J|K')){
   plotfunctions::emptyPlot(xlim=c(1,xmax),ylim=range(hobodat$temp),yaxt='n',xaxt='n',ann=F, bty='l')
   axis(2,cex.axis=1,lwd=0,lwd.ticks=1)
-  axis(1,cex.axis=1,lwd=0,lwd.ticks=1)
+  axlab <- c(0,10,20,30,40,50)
+  axis(1, at = axlab*48, labels = as.character(axlab), cex.axis=1,lwd=0,lwd.ticks=1) #48 measurements per day
   hobodat.sub <- filter(hobodat, str_detect(site, letter))
   for(i in 1:n_distinct(hobodat.sub$site)){
     pond <- unique(hobodat.sub$site)[i]
@@ -428,33 +429,33 @@ dev.off()
 
 merged.data$nut <- merged.data$nut-1
 
-merged.data$nut.std <- scale(merged.data$nut)
-merged.data$sc.gly.std <- scale(merged.data$sc.gly)
-merged.data$sc.imi.std <- scale(merged.data$sc.imi)
+merged.data$nut.num.std2 <- arm::rescale(merged.data$nut.num)
+merged.data$sc.gly.std2 <- arm::rescale(merged.data$sc.gly)
+merged.data$sc.imi.std2 <- arm::rescale(merged.data$sc.imi)
 
-ba.mod.lin <- lmer(log10(BA) ~ date.f:nut.std + date.f:sc.gly.std + date.f:sc.imi.std + date.f:sc.gly.std:sc.imi.std + date.f:sc.gly.std:nut.std +
-                     date.f:sc.imi.std:nut.std + (1|site.f),merged.data)
-ba.coefs <- get_model_data(ba.mod.lin, type = 'est')
+ba.mod.lin <- lmer(log10(BA) ~ date.f + date.f:nut.num.std2 + date.f:sc.gly.std2 + date.f:sc.imi.std2 + date.f:sc.gly.std2:sc.imi.std2 + date.f:sc.gly.std2:nut.num.std2 +
+                     date.f:sc.imi.std2:nut.num.std2 + (1|site.f),merged.data)
+ba.coefs <- get_model_data(ba.mod.lin, type = 'est')[6:41,]
 
-chla.mod.lin <- lmer(log10(total) ~ date.f:nut.std + date.f:sc.gly.std + date.f:sc.imi.std + date.f:sc.gly.std:sc.imi.std + date.f:sc.gly.std:nut.std +
-                       date.f:sc.imi.std:nut.std + (1|site.f),merged.data)
-chla.coefs <- get_model_data(chla.mod.lin, type = 'est')
+chla.mod.lin <- lmer(log10(total) ~ date.f + date.f:nut.num.std2 + date.f:sc.gly.std2 + date.f:sc.imi.std2 + date.f:sc.gly.std2:sc.imi.std2 + date.f:sc.gly.std2:nut.num.std2 +
+                       date.f:sc.imi.std2:nut.num.std2 + (1|site.f),merged.data)
+chla.coefs <- get_model_data(chla.mod.lin, type = 'est')[6:41,]
 
-zoo.mod.lin <- lmer(log10p(total_zoo) ~ date.f:nut.std + date.f:sc.gly.std + date.f:sc.imi.std + date.f:sc.gly.std:sc.imi.std + date.f:sc.gly.std:nut.std +
-                      date.f:sc.imi.std:nut.std + (1|site.f),merged.data)
-zoo.coefs <- get_model_data(zoo.mod.lin, type = 'est')
+zoo.mod.lin <- lmer(log10p(total_zoo) ~ date.f + date.f:nut.num.std2 + date.f:sc.gly.std2 + date.f:sc.imi.std2 + date.f:sc.gly.std2:sc.imi.std2 + date.f:sc.gly.std2:nut.num.std2 +
+                      date.f:sc.imi.std2:nut.num.std2 + (1|site.f),merged.data)
+zoo.coefs <- get_model_data(zoo.mod.lin, type = 'est')[6:41,]
 
-EP.mod.lin <- lmer(use ~ date.f:nut.std + date.f:sc.gly.std + date.f:sc.imi.std + date.f:sc.gly.std:sc.imi.std + date.f:sc.gly.std:nut.std +
-                     date.f:sc.imi.std:nut.std + (1|site.f),merged.data)
-use.coefs <- get_model_data(EP.mod.lin, type = 'est')
+EP.mod.lin <- lmer(use ~ date.f + date.f:nut.num.std2 + date.f:sc.gly.std2 + date.f:sc.imi.std2 + date.f:sc.gly.std2:sc.imi.std2 + date.f:sc.gly.std2:nut.num.std2 +
+                     date.f:sc.imi.std2:nut.num.std2 + (1|site.f),merged.data)
+use.coefs <- get_model_data(EP.mod.lin, type = 'est')[6:41,]
 
-nep.mod.lin <- lmer(log10p(NEP) ~ date.f:nut.std + date.f:sc.gly.std + date.f:sc.imi.std + date.f:sc.gly.std:sc.imi.std + date.f:sc.gly.std:nut.std +
-                      date.f:sc.imi.std:nut.std + (1|site.f),merged.data)
-nep.coefs <- get_model_data(nep.mod.lin, type = 'est')
+nep.mod.lin <- lmer(log10p(NEP) ~ date.f + date.f:nut.num.std2 + date.f:sc.gly.std2 + date.f:sc.imi.std2 + date.f:sc.gly.std2:sc.imi.std2 + date.f:sc.gly.std2:nut.num.std2 +
+                      date.f:sc.imi.std2:nut.num.std2 + (1|site.f),merged.data)
+nep.coefs <- get_model_data(nep.mod.lin, type = 'est')[6:41,]
 
-rue.mod.lin <- lmer(log10(RUE) ~ date.f:nut.std + date.f:sc.gly.std + date.f:sc.imi.std + date.f:sc.gly.std:sc.imi.std + date.f:sc.gly.std:nut.std +
-                      date.f:sc.imi.std:nut.std + (1|site.f),merged.data,subset=is.finite(log10(RUE)))
-rue.coefs <- get_model_data(rue.mod.lin, type = 'est')
+rue.mod.lin <- lmer(log10(RUE) ~ date.f + date.f:nut.num.std2 + date.f:sc.gly.std2 + date.f:sc.imi.std2 + date.f:sc.gly.std2:sc.imi.std2 + date.f:sc.gly.std2:nut.num.std2 +
+                      date.f:sc.imi.std2:nut.num.std2 + (1|site.f),merged.data,subset=is.finite(log10(RUE)))
+rue.coefs <- get_model_data(rue.mod.lin, type = 'est')[6:41,]
 
 tab_model(ba.mod.lin,chla.mod.lin,zoo.mod.lin, dv.labels = c('bacterial abundance','chlorophyll a','zooplankton biomass'), file='~/Desktop/TableS1.doc')
 tab_model(EP.mod.lin,nep.mod.lin,rue.mod.lin, dv.labels = c('C substrates used','oxygen production','zooplankton:phytoplankton'), file='~/Desktop/TableS2.doc')
