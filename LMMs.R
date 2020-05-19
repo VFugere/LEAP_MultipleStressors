@@ -1,6 +1,6 @@
 ## Code to analyze LEAP 2016 MS data
 ## Vincent Fugère 2019-2020
-## This code fits linear models and exports a caterpillar plot
+## This code fits various linear mixed effect models to identify the optimal model structure
 
 rm(list=ls())
 
@@ -64,7 +64,7 @@ merged.data$nut.num <- merged.data$nut.num-1
 merged.data$sc.gly.std <- scale(merged.data$sc.gly)
 merged.data$sc.imi.std <- scale(merged.data$sc.imi)
 
-merged.data$nut.num.std2 <- arm::rescale(merged.data$nut.num, 'full')
+merged.data$nut.num.std2 <- arm::rescale(merged.data$nut.num)
 merged.data$sc.gly.std2 <- arm::rescale(merged.data$sc.gly)
 merged.data$sc.imi.std2 <- arm::rescale(merged.data$sc.imi)
 
