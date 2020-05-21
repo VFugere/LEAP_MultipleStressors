@@ -47,6 +47,15 @@ sub$bacterio <- log10(sub$BA)
 sub$delta.O2 <- log10p(sub$NEP)
 
 sem1 <- psem(
+  lm(zoo ~ sc.gly, data = sub),
+  lm(phyto ~ sc.gly + zoo + nut.num, data = sub),
+  lm(delta.O2 ~ sc.gly + phyto + nut.num, data = sub),
+  data = sub
+)
+
+summary(sem1)
+
+sem1 <- psem(
   lm(zoo ~ sc.imi.std2 + sc.gly.std2, data = sub),
   lm(phyto ~ sc.gly.std2 + zoo, data = sub),
   lm(bacterio ~ sc.gly.std2, data = sub),
