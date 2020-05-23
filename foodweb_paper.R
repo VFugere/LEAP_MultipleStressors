@@ -108,7 +108,7 @@ imi$log.imi.target <- log10p(imi$imi.target.ppb)
 
 #### Figure: did treatments work? ####
 
-#pdf('~/Desktop/FigS1.pdf',width=11.5,height = 8.5,pointsize = 12)
+#pdf('~/Desktop/FigS1.pdf',width=7.5,height = 5.7,pointsize = 8)
 layout(rbind(c(1,1,2,2),c(3,3,4,5),c(6,6,7,8)))
 par(cex=1,mar=c(4,4,1,1))
 
@@ -874,3 +874,50 @@ arrows(x0=1:6,y0=rue.coefs$conf.low[19:24],y1=rue.coefs$conf.high[19:24],length=
 
 ##### SEM #####
 
+merged.data$phyto <- log10(merged.data$total)
+merged.data$zoo <- log10p(merged.data$total_zoo)
+merged.data$bacterio <- log10(merged.data$BA)
+merged.data$delta.O2 <- log10p(merged.data$NEP)
+
+results <- data.frame()
+dsepresults <- data.frame()
+Cres <- data.frame()
+rsq <- data.frame()
+
+for(date.x in c(7,15,35,43)){
+  
+  sub <- filter(merged.data, date == date.x)
+  
+  sem <- psem(
+    lm(zoo ~ sc.gly, data = sub),
+    lm(phyto ~ sc.gly + nut.num + zoo, data = sub),
+    lm(delta.O2 ~ sc.gly + phyto + nut.num, data = sub),
+    data = sub
+  ) 
+  #adding bacterio to NEP never produces a significant path (although bacterio responds to treatments)
+  #reversing the path from phyto to zoo does not change anything for other paths, and it is never a significant path
+  
+  cat(paste('#\n#\n================================ DAY',date.x,'================================\n#\n#'))
+  print(summary(sem,.progressBar = F))
+  
+  subres <- cbind(date.x,coefs(sem))
+  results <- rbind(results,subres)
+  
+  dsepresults <- rbind(dsepresults, cbind(date.x,as.data.frame(dSep(sem, .progressBar = F))))
+  
+  Cres <- rbind(Cres, cbind(date.x,fisherC(sem)))
+  
+  rsq <- rbind(rsq, cbind(date.x,rsquared(sem)))
+  
+}
+
+# for plotting
+
+results$arrow.size <- 0.5
+results$arrow.size[results$P.Value < 0.05]  <- scales::rescale(results$Std.Estimate[results$P.Value < 0.05], c(1,3.5))
+results
+
+# writexl::write_xlsx(results, '~/Desktop/SEMtable1.xlsx')
+# writexl::write_xlsx(dsepresults, '~/Desktop/SEMtable2.xlsx')
+# writexl::write_xlsx(Cres, '~/Desktop/SEMtable3.xlsx')
+# writexl::write_xlsx(rsq, '~/Desktop/SEMtable4.xlsx')
