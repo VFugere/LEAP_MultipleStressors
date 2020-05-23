@@ -6,6 +6,7 @@ rm(list=ls())
 library(tidyverse)
 library(skimr)
 library(magrittr)
+library(broom)
 
 library(scales)
 library(shape)
@@ -367,14 +368,16 @@ var.names.short <- c('Bact.','Chl. a','Zoo.','Subs. used',expression(Delta*DO),'
 
 load('~/Google Drive/Recherche/LEAP Postdoc/2016/GAMMs.RData')
 
-#broom
-#stargazer
-#pixiedust
+# #summary table
 
-# stargazer(ba.m, type='html', out='~/Desktop/S3.html')
-# gamtab
-# 
-# save_html(gamtabs(ba.m), file='~/Desktop/S3.html')
+# models <- list(ba.m,chla.m,zoo.m,use.m,nep.m,rue.m)
+# smooths <- map_df(models, tidy)
+# write.csv(smooths, '~/Desktop/stables.csv')
+# rm(models)
+# parametrics <- rbind(summary(ba.m)$p.table,summary(chla.m)$p.table,summary(zoo.m)$p.table,summary(use.m)$p.table,summary(nep.m)$p.table,summary(rue.m)$p.table)
+# write.csv(as.data.frame(parametrics), '~/Desktop/ptables.csv')
+# #rsqs
+# c(summary(ba.m)$r.sq,summary(chla.m)$r.sq,summary(zoo.m)$r.sq,summary(use.m)$r.sq,summary(nep.m)$r.sq,summary(rue.m)$r.sq)
 
 #### Fig. 2 & 3: time series of response variables ####
 
