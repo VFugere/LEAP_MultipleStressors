@@ -35,7 +35,7 @@ allcols <- c(gly.cols,gly.cols,imi.cols,imi.cols,both.cols,both.cols)
 
 #### plots ####
 
-corrgram(merged.data[,c(1,6:46)], order=TRUE, lower.panel=panel.shade,
+corrgram(merged.data[,c(1,3,4,15:24,71:101)], order=TRUE, lower.panel=panel.shade,
          upper.panel=panel.pie, text.panel=panel.txt,
          main=NULL)
 
@@ -84,6 +84,43 @@ for(v in 1:length(vars)){
   
 }
 
+dev.off()
+
+#### correlation between FC, Ecoplates, 16S read number and DNA concentration
+
+dna.conc <- read_xlsx('/Users/vincentfugere/Google Drive/Recherche/LEAP Postdoc/2016/raw data/Sequencing/reads_DNAconc_vincent.xlsx', sheet = 'DNA_conc') %>%
+  select(Sample,DNA.ng.ml,ecoplates.date) %>% rename('site' = Sample, 'date' = ecoplates.date) %>%
+  filter(!is.na(date))
+
+reads <- read_xlsx('/Users/vincentfugere/Google Drive/Recherche/LEAP Postdoc/2016/raw data/Sequencing/reads_DNAconc_vincent.xlsx', sheet = 'reads_clean') %>%
+  select(site,ecoplates.date,nonchim,run) %>% rename('date' = ecoplates.date) %>%
+  filter(!is.na(date))
+
+library(mgcv)
+library(itsadug)
+
+dat <- merged.data %>% select(date,site,gly:imi,NEP:Amines_amides) %>% left_join(dna.conc) %>%
+  left_join(reads)
+
+corrgram(dat, order=TRUE, lower.panel=panel.shade,
+         upper.panel=panel.pie, text.panel=panel.txt,
+         main=NULL)
+
+boxplot(nonchim~run,dat)
+
+dat$site <- as.factor(dat$site)
+
+# m1 <- gam(BA~s(max,k=7)+s(max,site,bs='fs',k=3),data=dat)
+# plot_smooth(m1,view='max')
+# summary(m1)
+
+pdf('~/Desktop/BAmethods.pdf',width=6,height=6,pointsize = 12)
+par(mfrow=c(2,2),mar=c(4,4,1,1),oma=c(0,0,0,0),cex=1)
+plot(BA~max,dat,pch=16,col='gray70',xlab='max AWCD',ylab='cell count (FC)',log='y')
+plot(BA~day.of.reading,dat,pch=16,col='gray70',xlab='days before 0.5 AWCD',ylab='cell count (FC)',log='y')
+plot(BA~DNA.ng.ml,dat,pch=16,col='gray70',xlab='DNA concentration',ylab='cell count (FC)',log='xy')
+plot(BA~nonchim,dat,pch=16,col=c('gray70','red')[dat$run],xlab='non-chimeric 16S reads',ylab='cell count (FC)',log='xy')
+legend('bottomleft',legend=c('run 1','run 2'),pch=16,col=c('gray70','red'),bty='n')
 dev.off()
 
 #### for Jesse ####
